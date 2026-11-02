@@ -1,0 +1,6 @@
+{
+  "name": "Collaborative Whiteboard & High-Performance Matching Engine",
+  "description": "Interactive dual-engine engineering workbench: real-time collaborative whiteboard with virtual bot swarms, Price-Time Priority LMAX Disruptor order matching engine, and Java 21 low-latency architecture specs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
