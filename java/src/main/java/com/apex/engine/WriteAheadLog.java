@@ -205,21 +205,25 @@ public final class WriteAheadLog implements AutoCloseable {
                     continue;
                 }
                 MappedByteBuffer buf = ch.map(FileChannel.MapMode.READ_ONLY, 0, size);
-                long count = buf.getLong(0);
-                long maxReadable = (size - HEADER_SIZE) / RECORD_SIZE;
-                long n = Math.min(count, maxReadable);
-                for (long i = 0; i < n; i++) {
-                    int offset = (int) (HEADER_SIZE + i * RECORD_SIZE);
-                    handler.onRecord(
-                            buf.getLong(offset),
-                            buf.getLong(offset + 8),
-                            buf.getLong(offset + 16),
-                            buf.get(offset + 24),
-                            buf.get(offset + 25),
-                            buf.get(offset + 26),
-                            buf.getDouble(offset + 32),
-                            buf.getLong(offset + 40),
-                            buf.getLong(offset + 48));
+                try {
+                    long count = buf.getLong(0);
+                    long maxReadable = (size - HEADER_SIZE) / RECORD_SIZE;
+                    long n = Math.min(count, maxReadable);
+                    for (long i = 0; i < n; i++) {
+                        int offset = (int) (HEADER_SIZE + i * RECORD_SIZE);
+                        handler.onRecord(
+                                buf.getLong(offset),
+                                buf.getLong(offset + 8),
+                                buf.getLong(offset + 16),
+                                buf.get(offset + 24),
+                                buf.get(offset + 25),
+                                buf.get(offset + 26),
+                                buf.getDouble(offset + 32),
+                                buf.getLong(offset + 40),
+                                buf.getLong(offset + 48));
+                    }
+                } finally {
+                    unmap(buf);
                 }
             }
         }
