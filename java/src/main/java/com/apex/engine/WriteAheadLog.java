@@ -140,6 +140,10 @@ public final class WriteAheadLog implements AutoCloseable {
     }
 
     private void closeSegment() throws IOException {
+        if (mapped != null) {
+            unmap(mapped); // release the mapping so the file can be deleted (Windows)
+            mapped = null;
+        }
         if (channel != null) {
             channel.close();
             channel = null;
@@ -148,7 +152,22 @@ public final class WriteAheadLog implements AutoCloseable {
             raf.close();
             raf = null;
         }
-        mapped = null;
+    }
+
+    /**
+     * Synchronously releases a memory mapping via {@code Unsafe.invokeCleaner}.
+     * Without this, Windows refuses to delete a mapped file until GC runs.
+     */
+    private static void unmap(MappedByteBuffer buf) {
+        try {
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            java.lang.reflect.Field theUnsafe = unsafeClass.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            Object unsafe = theUnsafe.get(null);
+            unsafeClass.getMethod("invokeCleaner", java.nio.ByteBuffer.class).invoke(unsafe, buf);
+        } catch (Exception e) {
+            // Best effort: the mapping still releases when GC collects the buffer.
+        }
     }
 
     @Override
