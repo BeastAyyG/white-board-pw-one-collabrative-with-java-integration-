@@ -224,8 +224,7 @@ export const MatchingEngineStudio: React.FC = () => {
   };
 
   // Burst Injector
-  const handleInjectBurst = () => {
-    const engine = engineRef.current;
+  const handleInjectBurst = () => {    const engine = engineRef.current;
     const ring = ringBufferRef.current;
     const basePrice = engine.getOrderBookState().midPrice || 100.0;
 
@@ -259,6 +258,17 @@ export const MatchingEngineStudio: React.FC = () => {
     setOrderBook(engine.getOrderBookState());
     setRecentTrades(engine.getRecentTrades().slice(0, 15));
   };
+
+  // Header "Inject 10k Load Burst" primary action -> run a 10k burst (20 x 500).
+  const burstHandlerRef = useRef(handleInjectBurst);
+  burstHandlerRef.current = handleInjectBurst;
+  useEffect(() => {
+    const onBurst = () => {
+      for (let i = 0; i < 20; i++) burstHandlerRef.current();
+    };
+    window.addEventListener('apex:inject-burst', onBurst);
+    return () => window.removeEventListener('apex:inject-burst', onBurst);
+  }, []);
 
   // Max volume in visible book for scaling depth bars
   const maxVolume = useMemo(() => {

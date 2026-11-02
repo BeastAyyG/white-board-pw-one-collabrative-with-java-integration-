@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+# Java / Maven
+java/target/
+# Write-ahead log segments (generated at runtime)
+wal/
+wal-demo/

@@ -202,8 +202,7 @@ export const MCQConsensusView: React.FC = () => {
     });
   };
 
-  const handleSurgeVoters = () => {
-    setQuestions((prevList) => {
+  const handleSurgeVoters = () => {    setQuestions((prevList) => {
       return prevList.map((q, idx) => {
         if (idx !== currentQuestionIndex) return q;
         const updated = q.options.map((o) => {
@@ -227,6 +226,17 @@ export const MCQConsensusView: React.FC = () => {
     });
     setTotalVotesProcessed((v) => v + 1000);
   };
+
+  // Header "Simulate 5k Voters" primary action -> five +1k surges.
+  const surgeHandlerRef = useRef(handleSurgeVoters);
+  surgeHandlerRef.current = handleSurgeVoters;
+  useEffect(() => {
+    const onSurge = () => {
+      for (let i = 0; i < 5; i++) surgeHandlerRef.current();
+    };
+    window.addEventListener('apex:simulate-voters', onSurge);
+    return () => window.removeEventListener('apex:simulate-voters', onSurge);
+  }, []);
 
   return (
     <div className="w-full min-h-[calc(100vh-61px)] bg-[#0B0F19] text-slate-100 p-6 flex flex-col gap-5 select-none overflow-y-auto">

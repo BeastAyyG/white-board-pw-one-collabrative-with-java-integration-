@@ -22,9 +22,17 @@ public final class DisruptorMatchingEngine {
     private final RingBuffer<OrderEvent> ringBuffer;
     private final ZeroGcOrderBook orderBook;
     private final AtomicLong tradesCount = new AtomicLong();
+    private final WriteAheadLog wal;
+    private final UdpReplicator replicator;
 
     public DisruptorMatchingEngine(double basePrice, double tickSize) {
         this.orderBook = new ZeroGcOrderBook(basePrice, tickSize);
+        try {
+            this.wal = new WriteAheadLog();
+        } catch (Exception e) {
+            throw new IllegalStateException("cannot open write-ahead log", e);
+        }
+        this.replicator = UdpReplicator.create();
 
         this.disruptor = new Disruptor<>(
                 OrderEvent.FACTORY,
@@ -37,7 +45,7 @@ public final class DisruptorMatchingEngine {
         // Three-Stage Mechanical Sympathy Pipeline:
         // 1. Journaler (WAL persistence) and Network Replicator run concurrently
         // 2. Matching Logic handler runs strictly after Stage 1 finishes
-        disruptor.handleEventsWith(new JournalerHandler(), new ReplicatorHandler())
+        disruptor.handleEventsWith(new JournalerHandler(wal), new ReplicatorHandler(replicator))
                  .then(new MatchingEngineHandler(this.orderBook, this.tradesCount));
 
         this.ringBuffer = disruptor.start();
@@ -57,8 +65,29 @@ public final class DisruptorMatchingEngine {
         }
     }
 
+    /** Cancels a resting order by id through the normal pipeline. */
+    public void cancelOrder(long orderId) {
+        submitOrder(orderId, 0, (byte) 0, OrderEvent.TYPE_CANCEL, 0.0, 0, (byte) 0);
+    }
+
     public long getTradesCount() {
         return tradesCount.get();
+    }
+
+    public long getCancelsCount() {
+        return orderBook.getCancels();
+    }
+
+    public long getRejectedCount() {
+        return orderBook.getRejectedRests();
+    }
+
+    public long getWalRecords() {
+        return wal.getTotalRecords();
+    }
+
+    public long getReplicatedDatagrams() {
+        return replicator == null ? 0 : replicator.getDatagramsSent();
     }
 
     public double getBestBid() {
@@ -71,21 +100,51 @@ public final class DisruptorMatchingEngine {
 
     public void shutdown() {
         disruptor.shutdown();
+        try {
+            wal.close();
+        } catch (Exception e) {
+            System.err.println("[engine] WAL close failed: " + e.getMessage());
+        }
+        if (replicator != null) {
+            replicator.close();
+        }
     }
 
     // --- Disruptor Event Handlers ---
 
+    /** Stage 1a: durable write-ahead log append (memory-mapped, zero-GC). */
     private static final class JournalerHandler implements EventHandler<OrderEvent> {
+        private final WriteAheadLog wal;
+
+        JournalerHandler(WriteAheadLog wal) {
+            this.wal = wal;
+        }
+
         @Override
         public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
-            // High-speed write to memory-mapped write-ahead log (WAL)
+            try {
+                wal.append(sequence, event.orderId, event.traderId, event.side, event.type,
+                        event.optionKey, event.price, event.quantity, event.timestampNs);
+            } catch (Exception e) {
+                throw new IllegalStateException("WAL append failed at sequence " + sequence, e);
+            }
         }
     }
 
+    /** Stage 1b: best-effort UDP replication to a standby node (no-op when unconfigured). */
     private static final class ReplicatorHandler implements EventHandler<OrderEvent> {
+        private final UdpReplicator replicator;
+
+        ReplicatorHandler(UdpReplicator replicator) {
+            this.replicator = replicator;
+        }
+
         @Override
         public void onEvent(OrderEvent event, long sequence, boolean endOfBatch) {
-            // Zero-copy multicast replication via Aeron / UDP
+            if (replicator != null) {
+                replicator.replicate(sequence, event.orderId, event.traderId, event.side,
+                        event.type, event.optionKey, event.price, event.quantity, event.timestampNs);
+            }
         }
     }
 

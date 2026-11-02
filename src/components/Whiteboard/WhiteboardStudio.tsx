@@ -18,7 +18,12 @@ import {
   Pause,
   ZoomIn,
   ZoomOut,
-  Maximize2
+  Maximize2,
+  FileJson,
+  Crosshair,
+  Brain,
+  DraftingCompass,
+  Footprints
 } from 'lucide-react';
 import { CanvasElement, Collaborator, Point, ToolType } from '../../types/index.ts';
 import {
@@ -174,7 +179,11 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   const [bots, setBots] = useState<Collaborator[]>([]);
   const [isBotsActive, setIsBotsActive] = useState<boolean>(true);
   const [botCount, setBotCount] = useState<number>(8);
+  const [botBehavior, setBotBehavior] = useState<'architect' | 'ideator' | 'explorer'>('architect');
+  const [followBotId, setFollowBotId] = useState<string | null>(null);
   const botTargetWaypoints = useRef<Map<string, Point>>(new Map());
+  const behaviorRef = useRef(botBehavior);
+  behaviorRef.current = botBehavior;
 
   // Initialize Bots
   useEffect(() => {
@@ -185,11 +194,31 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     setBots(initialBots);
   }, [botCount]);
 
+  // Header "Spawn Bot Swarm" primary action -> add bots without remounting.
+  useEffect(() => {
+    const onSpawn = (e: Event) => {
+      const count = (e as CustomEvent<{ count?: number }>).detail?.count ?? 15;
+      setBotCount((curr) => Math.min(100, curr + count));
+      setIsBotsActive(true);
+    };
+    window.addEventListener('apex:spawn-bots', onSpawn);
+    return () => window.removeEventListener('apex:spawn-bots', onSpawn);
+  }, []);
+
   // Bot Autonomous Simulation Loop
   useEffect(() => {
     if (!isBotsActive || bots.length === 0) return;
 
     const interval = setInterval(() => {
+      const behavior = behaviorRef.current;
+      // Per-behavior action probabilities: [addNode, addSticky]
+      const probs =
+        behavior === 'architect'
+          ? { node: 0.22, sticky: 0.05 }
+          : behavior === 'ideator'
+            ? { node: 0.05, sticky: 0.24 }
+            : { node: 0, sticky: 0 }; // explorer: roams the canvas
+
       setBots((prevBots) => {
         return prevBots.map((bot, index) => {
           // Get or create target waypoint
@@ -203,7 +232,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
             // Chance to perform an autonomous canvas action
             const actionRoll = Math.random();
-            if (actionRoll < 0.15) {
+            if (actionRoll < probs.sticky) {
               // Bot adds a sticky note with an architectural insight
               const idea = BOT_STICKY_IDEAS[Math.floor(Math.random() * BOT_STICKY_IDEAS.length)];
               const stickyColor = STICKY_COLORS[Math.floor(Math.random() * STICKY_COLORS.length)];
@@ -229,7 +258,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
                 return [...pruned, newSticky];
               });
               bot.lastAction = 'Added sticky note';
-            } else if (actionRoll < 0.25) {
+            } else if (actionRoll < probs.sticky + probs.node) {
               // Bot draws an architecture node
               const node = BOT_ARCH_NODES[Math.floor(Math.random() * BOT_ARCH_NODES.length)];
               const newNode: CanvasElement = {
@@ -251,7 +280,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
               setElements((curr) => [...curr, newNode]);
               bot.lastAction = `Created ${node.label}`;
             } else {
-              bot.lastAction = 'Reviewing architecture';
+              bot.lastAction = behavior === 'explorer' ? 'Exploring canvas' : 'Reviewing architecture';
             }
           }
 
@@ -269,10 +298,23 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           };
         });
       });
+
     }, 60);
 
     return () => clearInterval(interval);
   }, [isBotsActive, bots.length]);
+
+  // Follow-cam: keep the followed bot centered in the viewport.
+  useEffect(() => {
+    if (!followBotId) return;
+    const bot = bots.find((b) => b.id === followBotId);
+    const container = containerRef.current;
+    if (!bot || !container) return;
+    setPan({
+      x: container.clientWidth / 2 - bot.cursor.x * zoom,
+      y: container.clientHeight / 2 - bot.cursor.y * zoom,
+    });
+  }, [bots, followBotId, zoom]);
 
   // Main Canvas Render
   const renderCanvas = useCallback(() => {
@@ -680,6 +722,16 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     link.click();
   };
 
+  const handleExportJson = () => {
+    const blob = new Blob([JSON.stringify(elements, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `whiteboard-elements-${Date.now()}.json`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Add more bot collaborators
   const handleAddBots = (delta: number) => {
     setBotCount((curr) => Math.max(0, Math.min(100, curr + delta)));
@@ -826,6 +878,13 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           >
             <Download className="w-4 h-4" />
           </button>
+          <button
+            onClick={handleExportJson}
+            className="p-2 text-slate-400 hover:text-sky-400 hover:bg-slate-800 rounded-lg transition-colors"
+            title="Export Elements JSON"
+          >
+            <FileJson className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -847,16 +906,19 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           >
             You
           </div>
-          {/* Bot Avatars */}
+          {/* Bot Avatars (click to follow a collaborator's camera) */}
           {bots.slice(0, 5).map((bot) => (
-            <div
+            <button
               key={bot.id}
-              className="w-7 h-7 rounded-full border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow transition-transform hover:scale-110"
+              onClick={() => setFollowBotId((curr) => (curr === bot.id ? null : bot.id))}
+              className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white shadow transition-transform hover:scale-110 cursor-pointer ${
+                followBotId === bot.id ? 'border-indigo-400 scale-110' : 'border-slate-900'
+              }`}
               style={{ backgroundColor: bot.color }}
-              title={`${bot.name} — ${bot.lastAction}`}
+              title={`${bot.name} — ${bot.lastAction} (click to ${followBotId === bot.id ? 'stop following' : 'follow'})`}
             >
-              {bot.name.charAt(0)}
-            </div>
+              {followBotId === bot.id ? <Crosshair className="w-3.5 h-3.5" /> : bot.name.charAt(0)}
+            </button>
           ))}
           {bots.length > 5 && (
             <div className="w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-slate-300">
@@ -867,6 +929,28 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
         {/* Bot Controls */}
         <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+          {/* Behavior mode selector */}
+          <div className="flex items-center gap-0.5 bg-slate-950/60 rounded-lg p-0.5" title="Bot swarm behavior">
+            {(
+              [
+                { id: 'architect', icon: DraftingCompass, label: 'Architects draw nodes' },
+                { id: 'ideator', icon: Brain, label: 'Ideators drop stickies' },
+                { id: 'explorer', icon: Footprints, label: 'Explorers roam only' },
+              ] as const
+            ).map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setBotBehavior(id)}
+                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+                  botBehavior === id ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'
+                }`}
+                title={label}
+              >
+                <Icon className="w-3.5 h-3.5" />
+              </button>
+            ))}
+          </div>
+
           <button
             onClick={() => setIsBotsActive(!isBotsActive)}
             className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
