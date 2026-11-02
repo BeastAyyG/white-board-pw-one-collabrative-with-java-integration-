@@ -23,7 +23,10 @@ import {
   Crosshair,
   Brain,
   DraftingCompass,
-  Footprints
+  Footprints,
+  Wifi,
+  WifiOff,
+  RadioTower
 } from 'lucide-react';
 import { CanvasElement, Collaborator, Point, ToolType } from '../../types/index.ts';
 import {
@@ -71,8 +74,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
 
   // Elements & History
-  const [elements, setElements] = useState<CanvasElement[]>(() => {
-    // Initial architecture seed diagram
+  const [elements, setElements] = useState<CanvasElement[]>(() => {    // Initial architecture seed diagram
     return [
       {
         id: 'seed-node-1',
@@ -168,6 +170,9 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
   const [undoStack, setUndoStack] = useState<CanvasElement[][]>([]);
   const [redoStack, setRedoStack] = useState<CanvasElement[][]>([]);
+  // Live ref mirror of elements for socket handlers (avoids stale closures).
+  const elementsRef = useRef<CanvasElement[]>([]);
+  useEffect(() => { elementsRef.current = elements; }, [elements]);
 
   // Drawing interaction
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
@@ -184,6 +189,134 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   const botTargetWaypoints = useRef<Map<string, Point>>(new Map());
   const behaviorRef = useRef(botBehavior);
   behaviorRef.current = botBehavior;
+
+  // ---- Live multi-computer collaboration (Java WebSocket server) ----
+  const PEER_COLORS = ['#38BDF8', '#34D399', '#FBBF24', '#F472B6', '#A78BFA', '#818CF8', '#F97316', '#2DD4B6'];
+  const peerColorFor = (name: string) => {
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return PEER_COLORS[h % PEER_COLORS.length];
+  };
+  const [liveOn, setLiveOn] = useState(false);
+  const [liveRoom, setLiveRoom] = useState('main');
+  const [displayName, setDisplayName] = useState(
+    () => `Guest-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+  );
+  const [peers, setPeers] = useState<Collaborator[]>([]);
+  const [liveStatus, setLiveStatus] = useState<'off' | 'connecting' | 'live' | 'error'>('off');
+  const wsRef = useRef<WebSocket | null>(null);
+  const liveRoomRef = useRef(liveRoom);
+  liveRoomRef.current = liveRoom;
+  const displayNameRef = useRef(displayName);
+  displayNameRef.current = displayName;
+  const myColorRef = useRef(peerColorFor(displayName));
+  const lastCursorSentRef = useRef(0);
+
+  const sendLive = useCallback((obj: Record<string, unknown>) => {
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ ...obj, room: liveRoomRef.current }));
+    }
+  }, []);
+
+  const upsertLive = useCallback((el: CanvasElement) => {
+    sendLive({ type: 'element', action: 'upsert', element: el });
+  }, [sendLive]);
+
+  const deleteLive = useCallback((id: string) => {
+    sendLive({ type: 'element', action: 'delete', element: { id } });
+  }, [sendLive]);
+
+  const connectLive = useCallback(() => {
+    if (wsRef.current) return;
+    setLiveStatus('connecting');
+    const host = window.location.hostname || 'localhost';
+    const ws = new WebSocket(`ws://${host}:8090/ws/whiteboard`);
+    wsRef.current = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'join', room: liveRoomRef.current, name: displayNameRef.current }));
+    };
+    ws.onmessage = (ev) => {
+      let msg: any;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+      if (msg.room && msg.room !== liveRoomRef.current) return;
+      if (msg.type === 'snapshot') {
+        const els = Array.isArray(msg.elements) ? (msg.elements as CanvasElement[]) : [];
+        if (els.length === 0) {
+          // Fresh room: seed it with my current canvas so late joiners see it.
+          elementsRef.current.forEach((el) => {
+            ws.send(JSON.stringify({ type: 'element', action: 'upsert', room: liveRoomRef.current, element: el }));
+          });
+        } else {
+          setUndoStack((u) => [...u, elementsRef.current]);
+          setElements(els);
+        }
+        setLiveStatus('live');
+        setLiveOn(true);
+        setIsBotsActive(false); // real humans now; pause the bot swarm
+      } else if (msg.type === 'element') {
+        const el = msg.element;
+        if (!el || !el.id) return;
+        if (msg.action === 'delete') {
+          setElements((prev) => prev.filter((e) => e.id !== el.id));
+        } else {
+          setElements((prev) => {
+            const idx = prev.findIndex((e) => e.id === el.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = { ...el, updatedAt: Date.now() } as CanvasElement;
+              return next;
+            }
+            return [...prev, el as CanvasElement];
+          });
+        }
+      } else if (msg.type === 'presence') {
+        const name = String(msg.user || 'anon');
+        if (name === displayNameRef.current) return;
+        if (msg.event === 'leave') {
+          setPeers((prev) => prev.filter((p) => p.name !== name));
+        } else {
+          setPeers((prev) => {
+            if (prev.some((p) => p.name === name)) return prev;
+            return [...prev, {
+              id: `peer-${name}`, name, color: peerColorFor(name),
+              cursor: { x: 600, y: 400 }, activeTool: 'select' as ToolType,
+              isBot: false, avatarSeed: name, lastAction: 'joined', lastActive: Date.now(),
+            }];
+          });
+        }
+      } else if (msg.type === 'cursor') {
+        const name = String(msg.user || '');
+        if (!name || name === displayNameRef.current) return;
+        const pt = { x: Number(msg.x) || 0, y: Number(msg.y) || 0 };
+        setPeers((prev) => prev.map((p) =>
+          p.name === name ? { ...p, cursor: pt, lastActive: Date.now() } : p
+        ));
+      }
+    };
+    ws.onerror = () => setLiveStatus('error');
+    ws.onclose = () => {
+      wsRef.current = null;
+      setLiveOn(false);
+      setPeers([]);
+      setLiveStatus((s) => (s === 'live' ? 'off' : s));
+    };
+  }, []);
+
+  const disconnectLive = useCallback(() => {
+    const ws = wsRef.current;
+    if (ws) {
+      try { ws.send(JSON.stringify({ type: 'leave', room: liveRoomRef.current })); } catch { /* noop */ }
+      ws.close();
+    }
+    wsRef.current = null;
+    setLiveOn(false);
+    setPeers([]);
+    setLiveStatus('off');
+  }, []);
+
+  // Close the socket on unmount.
+  useEffect(() => () => { wsRef.current?.close(); }, []);
 
   // Initialize Bots
   useEffect(() => {
@@ -507,8 +640,41 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       ctx.restore();
     }
 
+    // Render Live Peer Cursors (real humans on other computers)
+    for (const peer of peers) {
+      ctx.save();
+      const cx = peer.cursor.x;
+      const cy = peer.cursor.y;
+
+      ctx.fillStyle = peer.color;
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx, cy + 18);
+      ctx.lineTo(cx + 4.5, cy + 14);
+      ctx.lineTo(cx + 10, cy + 22);
+      ctx.lineTo(cx + 13, cy + 20);
+      ctx.lineTo(cx + 7.5, cy + 12);
+      ctx.lineTo(cx + 14, cy + 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = peer.color;
+      ctx.beginPath();
+      ctx.roundRect(cx + 14, cy + 12, peer.name.length * 7 + 14, 20, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '10px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(peer.name, cx + 21, cy + 26);
+
+      ctx.restore();
+    }
+
     ctx.restore();
-  }, [elements, currentElement, selectedElementId, bots, pan, zoom]);
+  }, [elements, currentElement, selectedElementId, bots, peers, pan, zoom]);
 
   // Redraw when state updates
   useEffect(() => {
@@ -548,6 +714,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       if (hit) {
         setUndoStack((prev) => [...prev, elements]);
         setElements((prev) => prev.filter((el) => el.id !== hit.id));
+        deleteLive(hit.id);
       }
       return;
     }
@@ -616,6 +783,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       };
       setUndoStack((prev) => [...prev, elements]);
       setElements((prev) => [...prev, newSticky]);
+      upsertLive(newSticky);
       setIsDrawing(false);
       setSelectedElementId(newSticky.id);
     } else if (activeTool === 'text') {
@@ -636,17 +804,28 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       };
       setUndoStack((prev) => [...prev, elements]);
       setElements((prev) => [...prev, newText]);
+      upsertLive(newText);
       setIsDrawing(false);
       setSelectedElementId(newText.id);
     }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !currentElement) return;
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = (e.clientX - rect.left - pan.x) / zoom;
     const y = (e.clientY - rect.top - pan.y) / zoom;
+
+    // Broadcast my cursor to the live room (throttled).
+    if (liveOn) {
+      const now = Date.now();
+      if (now - lastCursorSentRef.current > 120) {
+        lastCursorSentRef.current = now;
+        sendLive({ type: 'cursor', user: displayNameRef.current, x: Math.round(x), y: Math.round(y) });
+      }
+    }
+
+    if (!isDrawing || !currentElement) return;
 
     if (currentElement.type === 'stroke') {
       setCurrentElement((prev) => {
@@ -685,6 +864,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       setUndoStack((prev) => [...prev, elements]);
       setRedoStack([]);
       setElements((prev) => [...prev, currentElement]);
+      upsertLive(currentElement);
       setCurrentElement(null);
     }
     setIsDrawing(false);
@@ -711,6 +891,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     setUndoStack((prev) => [...prev, elements]);
     setElements([]);
     setSelectedElementId(null);
+    sendLive({ type: 'clear' });
   };
 
   const handleExportPng = () => {
@@ -893,7 +1074,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-indigo-400" />
           <span className="text-xs font-semibold text-slate-200">
-            {1 + bots.length} Collaborators
+            {1 + bots.length + peers.length} Collaborators
           </span>
         </div>
 
@@ -973,6 +1154,61 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             +5 Bots
           </button>
         </div>
+
+        {/* Live multi-computer collaboration */}
+        <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800" title="Join a live room hosted by the Java server">
+          <RadioTower className={`w-4 h-4 ${liveOn ? 'text-emerald-400' : 'text-slate-500'}`} />
+          {!liveOn && (
+            <>
+              <input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value.slice(0, 16))}
+                placeholder="Name"
+                className="bg-slate-950/60 text-xs text-slate-100 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500 w-20"
+                title="Your display name"
+              />
+              <input
+                value={liveRoom}
+                onChange={(e) => setLiveRoom(e.target.value.slice(0, 24) || 'main')}
+                placeholder="Room"
+                className="bg-slate-950/60 text-xs text-slate-100 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500 w-20"
+                title="Room name — everyone with the same room draws together"
+              />
+            </>
+          )}
+          <button
+            onClick={() => (liveOn ? disconnectLive() : connectLive())}
+            disabled={liveStatus === 'connecting'}
+            className={`px-2.5 py-1 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 ${
+              liveOn
+                ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60'
+                : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900/60'
+            }`}
+            title={liveOn ? `Leave live room "${liveRoom}"` : 'Connect to the live whiteboard server on this machine (port 8090)'}
+          >
+            {liveOn ? <WifiOff className="w-3.5 h-3.5" /> : <Wifi className="w-3.5 h-3.5" />}
+            {liveStatus === 'connecting' ? 'Connecting…' : liveOn ? `Live: ${liveRoom}` : 'Go Live'}
+          </button>
+          {liveStatus === 'error' && (
+            <span className="text-[10px] text-rose-400">server unreachable</span>
+          )}
+          {/* Live peer avatars */}
+          {peers.slice(0, 4).map((p) => (
+            <div
+              key={p.id}
+              className="w-7 h-7 rounded-full border-2 border-emerald-400/70 flex items-center justify-center text-[10px] font-bold text-white shadow"
+              style={{ backgroundColor: p.color }}
+              title={`${p.name} (live)`}
+            >
+              {p.name.charAt(0).toUpperCase()}
+            </div>
+          ))}
+          {peers.length > 4 && (
+            <div className="w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-slate-300">
+              +{peers.length - 4}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Vector Canvas */}
@@ -1029,11 +1265,16 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
                 prev.map((el) => (el.id === selectedElementId ? { ...el, text: val } : el))
               );
             }}
+            onBlur={() => {
+              const el = elements.find((el) => el.id === selectedElementId);
+              if (el) upsertLive(el);
+            }}
             className="bg-slate-800 text-xs text-slate-100 px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 w-48"
           />
           <button
             onClick={() => {
               setElements((prev) => prev.filter((el) => el.id !== selectedElementId));
+              if (selectedElementId) deleteLive(selectedElementId);
               setSelectedElementId(null);
             }}
             className="px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
