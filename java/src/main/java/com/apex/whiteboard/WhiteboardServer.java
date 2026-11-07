@@ -36,10 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
  *  {"type":"clear",  "room":"main"}
  *  {"type":"cursor", "room":"main","user":"Asha","x":120.5,"y":300.0}  // relayed only
  *  {"type":"leave",  "room":"main"}
+ *  {"type":"vote",   "room":"main","question":"q1","option":"B","user":"Asha"}  // stored + tally broadcast
+ *  {"type":"tally",  "room":"main","question":"q1"}  // server replies with the stored votes
+ *  {"type":"question","room":"main","question":"q2"}  // teacher drives the class quiz, relayed
+ *  {"type":"poll",   "room":"main","question":"q1","action":"open|reveal"}  // relayed
  * </pre>
  * The server replies to a join with
- * {@code {"type":"snapshot","room":"main","elements":[...]}} so late joiners
- * converge on current state, and broadcasts
+ * {@code {"type":"snapshot","room":"main","elements":[...],"votes":{"q1":{"Asha":"B"}}}}
+ * so late joiners converge on current state, and broadcasts
  * {@code {"type":"presence","room":"main","event":"join|leave","user":"..."}}.
  */
 public final class WhiteboardServer {
@@ -55,6 +59,8 @@ public final class WhiteboardServer {
     private static final class Room {
         final ChannelGroup members = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
         final ConcurrentHashMap<String, JsonNode> elements = new ConcurrentHashMap<>();
+        /** Live-quiz votes: question id -> (voter name -> option A/B/C/D). One vote per voter. */
+        final ConcurrentHashMap<String, ConcurrentHashMap<String, String>> votes = new ConcurrentHashMap<>();
     }
 
     public WhiteboardServer(int port) {
@@ -133,6 +139,9 @@ public final class WhiteboardServer {
                 case "clear" -> handleClear(ctx, roomName, msg);
                 case "cursor" -> relay(ctx, roomName, payload);
                 case "leave" -> handleLeave(ctx, roomName, payload);
+                case "vote" -> handleVote(ctx, roomName, msg);
+                case "tally" -> handleTally(ctx, roomName, msg);
+                case "question", "poll" -> relay(ctx, roomName, payload);
                 default -> sendError(ctx, "unknown message type: " + type);
             }
         }
@@ -152,6 +161,13 @@ public final class WhiteboardServer {
             ArrayNode elements = snapshot.putArray("elements");
             for (JsonNode el : room.elements.values()) {
                 elements.add(el);
+            }
+            ObjectNode votes = snapshot.putObject("votes");
+            for (var entry : room.votes.entrySet()) {
+                ObjectNode perQuestion = votes.putObject(entry.getKey());
+                for (var voter : entry.getValue().entrySet()) {
+                    perQuestion.put(voter.getKey(), voter.getValue());
+                }
             }
             ctx.writeAndFlush(new TextWebSocketFrame(snapshot.toString()));
 
@@ -222,6 +238,79 @@ public final class WhiteboardServer {
 
         private void handleLeave(ChannelHandlerContext ctx, String roomName, String payload) {
             leaveRoom(ctx, roomName);
+        }
+
+        /** Live-quiz vote: one vote per voter per question, changeable until the reveal. */
+        private void handleVote(ChannelHandlerContext ctx, String roomName, JsonNode msg) {
+            Room room = rooms.get(roomName);
+            if (room == null) {
+                sendError(ctx, "not in room " + roomName);
+                return;
+            }
+            String question = msg.path("question").asText("");
+            String option = msg.path("option").asText("");
+            if (question.isEmpty() || !(option.equals("A") || option.equals("B") || option.equals("C") || option.equals("D"))) {
+                sendError(ctx, "vote message needs a question and an option A/B/C/D");
+                return;
+            }
+            String user = msg.path("user").asText("");
+            if (user.isEmpty()) {
+                String known = ctx.channel().attr(USER).get();
+                user = known == null ? "anonymous" : known;
+            }
+            room.votes.computeIfAbsent(question, k -> new ConcurrentHashMap<>()).put(user, option);
+
+            ObjectNode tallyMsg = JSON.createObjectNode();
+            tallyMsg.put("type", "vote");
+            tallyMsg.put("room", roomName);
+            tallyMsg.put("question", question);
+            tallyMsg.put("user", user);
+            tallyMsg.put("option", option);
+            tallyMsg.set("tally", tallyNode(room, question));
+            broadcastExcept(room, ctx.channel(), tallyMsg.toString());
+        }
+
+        /** A client asks for the stored votes of one question; reply to the requester only. */
+        private void handleTally(ChannelHandlerContext ctx, String roomName, JsonNode msg) {
+            String question = msg.path("question").asText("");
+            Room room = rooms.get(roomName);
+            ObjectNode reply = JSON.createObjectNode();
+            reply.put("type", "tally");
+            reply.put("room", roomName);
+            reply.put("question", question);
+            if (room != null && !question.isEmpty()) {
+                ObjectNode votersNode = reply.putObject("voters");
+                for (var voter : room.votes.getOrDefault(question, new ConcurrentHashMap<>()).entrySet()) {
+                    votersNode.put(voter.getKey(), voter.getValue());
+                }
+                reply.set("tally", tallyNode(room, question));
+            } else {
+                reply.putObject("voters");
+                reply.set("tally", tallyNode(null, question));
+            }
+            ctx.writeAndFlush(new TextWebSocketFrame(reply.toString()));
+        }
+
+        private ObjectNode tallyNode(Room room, String question) {
+            ObjectNode tally = JSON.createObjectNode();
+            int a = 0, b = 0, c = 0, d = 0;
+            if (room != null) {
+                for (String option : room.votes.getOrDefault(question, new ConcurrentHashMap<>()).values()) {
+                    switch (option) {
+                        case "A" -> a++;
+                        case "B" -> b++;
+                        case "C" -> c++;
+                        case "D" -> d++;
+                        default -> {
+                        }
+                    }
+                }
+            }
+            tally.put("A", a);
+            tally.put("B", b);
+            tally.put("C", c);
+            tally.put("D", d);
+            return tally;
         }
 
         private void leaveRoom(ChannelHandlerContext ctx, String roomName) {

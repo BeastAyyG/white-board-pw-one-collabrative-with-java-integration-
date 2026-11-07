@@ -1,49 +1,54 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Users, Sparkles, Trophy, CheckCircle2, TrendingUp, Cpu, Flame, Play, Pause } from 'lucide-react';
-import { MatchingEngine } from '../../engine/matchingEngine.ts';
-import { MCQQuestion, Order } from '../../types/index.ts';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { HelpCircle, Users, Trophy, CheckCircle2, Timer, Play, GraduationCap, Radio, WifiOff } from 'lucide-react';
 
-const QUESTIONS: MCQQuestion[] = [
+/**
+ * PW-style live quiz (replaces the simulated-voter MCQ consensus view).
+ *
+ * The teacher presents a question, real people tap A / B / C / D, and when
+ * the poll closes the AI Teacher explains the answer. No fake voters, no
+ * votes-per-second: the tally starts at zero and only real votes count.
+ *
+ * Votes travel over the same Java WebSocket room as the whiteboard
+ * (ws://host:8090/ws/whiteboard, room "main"). With no server reachable the
+ * tab still works in demo mode: your vote counts on this screen only.
+ */
+
+type OptionKey = 'A' | 'B' | 'C' | 'D';
+type Phase = 'idle' | 'open' | 'revealed';
+
+interface QuizOption {
+  key: OptionKey;
+  label: string;
+  isCorrect: boolean;
+}
+
+interface QuizQuestion {
+  id: string;
+  title: string;
+  context: string;
+  options: QuizOption[];
+  explanation: string;
+  trap: string;
+}
+
+const POLL_SECONDS = 30;
+const ROOM = 'main';
+
+const QUESTIONS: QuizQuestion[] = [
   {
     id: 'q1',
     title: 'Which concurrency pattern guarantees the lowest tail latency for order book processing?',
     context:
       'High-frequency trading exchanges need to avoid lock contention, context switches, and cache invalidation storms.',
     options: [
-      {
-        key: 'A',
-        label: 'Single-Thread Core with LMAX Disruptor RingBuffer',
-        isCorrect: true,
-        poolVolume: 4200,
-        impliedOdds: 78,
-        bidsCount: 1420,
-      },
-      {
-        key: 'B',
-        label: 'Java synchronized blocks on OrderBook object',
-        isCorrect: false,
-        poolVolume: 320,
-        impliedOdds: 6,
-        bidsCount: 110,
-      },
-      {
-        key: 'C',
-        label: 'ThreadPool with ConcurrentLinkedQueue',
-        isCorrect: false,
-        poolVolume: 580,
-        impliedOdds: 11,
-        bidsCount: 195,
-      },
-      {
-        key: 'D',
-        label: 'Actor model with Akka asynchronous mailboxes',
-        isCorrect: false,
-        poolVolume: 280,
-        impliedOdds: 5,
-        bidsCount: 95,
-      },
+      { key: 'A', label: 'Single-Thread Core with LMAX Disruptor RingBuffer', isCorrect: true },
+      { key: 'B', label: 'Java synchronized blocks on OrderBook object', isCorrect: false },
+      { key: 'C', label: 'ThreadPool with ConcurrentLinkedQueue', isCorrect: false },
+      { key: 'D', label: 'Actor model with Akka asynchronous mailboxes', isCorrect: false },
     ],
-    totalBidsVolume: 5380,
+    explanation:
+      'One thread owns the whole match path, so there is no lock to contend for, no context switch, and no cache line bouncing between cores. The Disruptor ring buffer is pre-allocated, so the hot path allocates nothing and the GC never pauses a match. That is why tail latency stays in single-digit microseconds instead of spiking under load.',
+    trap: 'Most classes pick B. Synchronized blocks feel safe, but every match then queues on one monitor and every core invalidates the same cache line, which is exactly what inflates p99.',
   },
   {
     id: 'q2',
@@ -51,311 +56,356 @@ const QUESTIONS: MCQQuestion[] = [
     context:
       'When independent variables reside on the same 64-byte L1/L2 cache line, concurrent writes force cache line invalidations.',
     options: [
-      {
-        key: 'A',
-        label: 'Cache line padding with @Contended or 128 bytes dummy fields',
-        isCorrect: true,
-        poolVolume: 3800,
-        impliedOdds: 82,
-        bidsCount: 1250,
-      },
-      {
-        key: 'B',
-        label: 'Using volatile variables without locks',
-        isCorrect: false,
-        poolVolume: 420,
-        impliedOdds: 9,
-        bidsCount: 140,
-      },
-      {
-        key: 'C',
-        label: 'Calling Thread.yield() after every write',
-        isCorrect: false,
-        poolVolume: 180,
-        impliedOdds: 4,
-        bidsCount: 60,
-      },
-      {
-        key: 'D',
-        label: 'Compacting JVM heap with ZGC generational collection',
-        isCorrect: false,
-        poolVolume: 230,
-        impliedOdds: 5,
-        bidsCount: 75,
-      },
+      { key: 'A', label: 'Cache line padding with @Contended or 128 bytes dummy fields', isCorrect: true },
+      { key: 'B', label: 'Using volatile variables without locks', isCorrect: false },
+      { key: 'C', label: 'Calling Thread.yield() after every write', isCorrect: false },
+      { key: 'D', label: 'Compacting JVM heap with ZGC generational collection', isCorrect: false },
     ],
-    totalBidsVolume: 4630,
+    explanation:
+      'Two threads writing different variables that share one 64-byte cache line force the line to bounce between cores on every write. Padding puts each hot variable on its own line, so a write invalidates nothing the other thread owns. The Disruptor pads its sequence counters to 128 bytes for the same reason.',
+    trap: 'Volatile fixes visibility, not sharing. A volatile write to a shared line still invalidates every other core’s copy, so the bouncing continues.',
+  },
+  {
+    id: 'q3',
+    title: 'What does a Project Loom virtual thread give you that a platform thread pool does not?',
+    context:
+      'The matching engine runs 10,000 simulated traders. Each one blocks on I/O while it waits for market data.',
+    options: [
+      { key: 'A', label: 'Thousands of cheap threads that park without holding an OS thread', isCorrect: true },
+      { key: 'B', label: 'Faster garbage collection for short-lived objects', isCorrect: false },
+      { key: 'C', label: 'Automatic parallelisation of sequential loops', isCorrect: false },
+      { key: 'D', label: 'A lock-free replacement for synchronized blocks', isCorrect: false },
+    ],
+    explanation:
+      'A virtual thread costs a few kilobytes and parks without holding an OS thread, so a million of them can block on I/O at once while a small pool of carrier threads does the real work. A platform thread costs around a megabyte of stack and blocks its OS thread, so a thread pool stalls once every thread is waiting.',
+    trap: 'Loom does not parallelise your code. It only makes blocking cheap. A slow loop is still a slow loop, it just stops wasting a whole OS thread while it waits.',
+  },
+  {
+    id: 'q4',
+    title: 'Why is the order book kept as flat primitive arrays instead of a tree of Order objects?',
+    context:
+      'The matching loop walks price levels in order, thousands of times a second, on the hottest path in the engine.',
+    options: [
+      { key: 'A', label: 'Contiguous arrays keep the hot data in L1/L2 cache and avoid pointer chasing', isCorrect: true },
+      { key: 'B', label: 'Arrays let the JVM skip garbage collection entirely', isCorrect: false },
+      { key: 'C', label: 'Trees cannot store price-time priority', isCorrect: false },
+      { key: 'D', label: 'Primitive arrays use less heap only for small books', isCorrect: false },
+    ],
+    explanation:
+      'The match loop walks price levels in order, so a flat array means sequential access that the CPU prefetcher loves: the next level is already in L1/L2 before you need it. A tree of Order objects means pointer chasing through the heap, a cache miss per level, and an allocation every time an order is created.',
+    trap: 'Arrays do not switch the GC off. The win is cache locality and zero allocation on the match path, not escaping the collector.',
   },
 ];
 
+function tallyOf(voters: Record<string, OptionKey>): Record<OptionKey, number> {
+  const t: Record<OptionKey, number> = { A: 0, B: 0, C: 0, D: 0 };
+  for (const v of Object.values(voters)) {
+    t[v] += 1;
+  }
+  return t;
+}
+
 export const MCQConsensusView: React.FC = () => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [questions, setQuestions] = useState<MCQQuestion[]>(QUESTIONS);
-  const [userSelectedOption, setUserSelectedOption] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
-  const [isSwarmActive, setIsSwarmActive] = useState<boolean>(true);
-  const [simulatedVoterCount, setSimulatedVoterCount] = useState<number>(3500);
-  const [totalVotesProcessed, setTotalVotesProcessed] = useState<number>(14250);
-  const [opsPerSec, setOpsPerSec] = useState<number>(1850);
+  const [qIndex, setQIndex] = useState(0);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [voters, setVoters] = useState<Record<string, OptionKey>>({});
+  const [myName, setMyName] = useState(() => `Guest-${Math.floor(1000 + Math.random() * 9000)}`);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [connected, setConnected] = useState<'connecting' | 'live' | 'demo'>('connecting');
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const engineRef = useRef<MatchingEngine>(new MatchingEngine(50.0));
+  const wsRef = useRef<WebSocket | null>(null);
+  const qIdRef = useRef(QUESTIONS[0].id);
+  qIdRef.current = QUESTIONS[qIndex].id;
+  const myNameRef = useRef(myName);
+  myNameRef.current = myName;
 
-  const currentQ = questions[currentQuestionIndex];
+  const question = QUESTIONS[qIndex];
+  const tally = tallyOf(voters);
+  const totalVotes = Object.keys(voters).length;
+  const myVote: OptionKey | null = voters[myName] ?? null;
+  const correctKey = question.options.find((o) => o.isCorrect)?.key ?? 'A';
+  const leadingKey: OptionKey | null =
+    totalVotes === 0
+      ? null
+      : (Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0] as OptionKey);
+  const leadingPct = leadingKey && totalVotes > 0 ? Math.round((tally[leadingKey] / totalVotes) * 100) : 0;
+  const correctCount = phase === 'revealed' ? tally[correctKey] : 0;
+  const correctPct = phase === 'revealed' && totalVotes > 0 ? Math.round((correctCount / totalVotes) * 100) : 0;
 
-  // Simulated concurrent voter swarm
-  useEffect(() => {
-    if (!isSwarmActive) return;
-
-    const interval = setInterval(() => {
-      // Generate a batch of virtual voter orders
-      const batchSize = Math.floor(15 + Math.random() * 25);
-      const chosenKey: 'A' | 'B' | 'C' | 'D' =
-        Math.random() < 0.75
-          ? 'A' // Correct answer gets organic crowd consensus
-          : (['B', 'C', 'D'][Math.floor(Math.random() * 3)] as 'B' | 'C' | 'D');
-
-      const voteWeight = Math.floor(1 + Math.random() * 10);
-
-      // Match through the engine
-      engineRef.current.processOrder({
-        id: `vote-${Date.now()}-${Math.random()}`,
-        traderId: `student-${Math.floor(Math.random() * simulatedVoterCount)}`,
-        traderName: `Voter_${Math.floor(Math.random() * simulatedVoterCount)}`,
-        side: 'BUY',
-        type: 'MARKET',
-        price: 0,
-        size: voteWeight,
-        optionKey: chosenKey,
-      });
-
-      setQuestions((prevList) => {
-        return prevList.map((q, idx) => {
-          if (idx !== currentQuestionIndex) return q;
-
-          const updatedOptions = q.options.map((opt) => {
-            if (opt.key === chosenKey) {
-              const newVol = opt.poolVolume + voteWeight;
-              const newBids = opt.bidsCount + 1;
-              return { ...opt, poolVolume: newVol, bidsCount: newBids };
-            }
-            return opt;
-          });
-
-          const newTotalVol = updatedOptions.reduce((sum, o) => sum + o.poolVolume, 0);
-          const withOdds = updatedOptions.map((opt) => ({
-            ...opt,
-            impliedOdds: Math.round((opt.poolVolume / newTotalVol) * 100),
-          }));
-
-          return {
-            ...q,
-            options: withOdds,
-            totalBidsVolume: newTotalVol,
-          };
-        });
-      });
-
-      setTotalVotesProcessed((v) => v + batchSize);
-      setOpsPerSec(Math.round(1500 + Math.random() * 700));
-    }, 80);
-
-    return () => clearInterval(interval);
-  }, [isSwarmActive, currentQuestionIndex, simulatedVoterCount]);
-
-  const handleCastVote = (optionKey: 'A' | 'B' | 'C' | 'D') => {
-    setUserSelectedOption(optionKey);
-    const voteWeight = 250;
-
-    engineRef.current.processOrder({
-      id: `user-vote-${Date.now()}`,
-      traderId: 'user',
-      traderName: 'You (Host)',
-      side: 'BUY',
-      type: 'LIMIT',
-      price: 50.0,
-      size: voteWeight,
-      optionKey,
-    });
-
-    setQuestions((prevList) => {
-      return prevList.map((q, idx) => {
-        if (idx !== currentQuestionIndex) return q;
-        const updated = q.options.map((o) => {
-          if (o.key === optionKey) {
-            return {
-              ...o,
-              poolVolume: o.poolVolume + voteWeight,
-              bidsCount: o.bidsCount + 1,
-            };
-          }
-          return o;
-        });
-        const total = updated.reduce((s, o) => s + o.poolVolume, 0);
-        return {
-          ...q,
-          options: updated.map((o) => ({
-            ...o,
-            impliedOdds: Math.round((o.poolVolume / total) * 100),
-          })),
-          totalBidsVolume: total,
-        };
-      });
-    });
-  };
-
-  const handleSurgeVoters = () => {    setQuestions((prevList) => {
-      return prevList.map((q, idx) => {
-        if (idx !== currentQuestionIndex) return q;
-        const updated = q.options.map((o) => {
-          const boost = o.key === 'A' ? 2000 : 300;
-          return {
-            ...o,
-            poolVolume: o.poolVolume + boost,
-            bidsCount: o.bidsCount + 250,
-          };
-        });
-        const total = updated.reduce((s, o) => s + o.poolVolume, 0);
-        return {
-          ...q,
-          options: updated.map((o) => ({
-            ...o,
-            impliedOdds: Math.round((o.poolVolume / total) * 100),
-          })),
-          totalBidsVolume: total,
-        };
-      });
-    });
-    setTotalVotesProcessed((v) => v + 1000);
-  };
-
-  // Header "Simulate 5k Voters" primary action -> five +1k surges.
-  const surgeHandlerRef = useRef(handleSurgeVoters);
-  surgeHandlerRef.current = handleSurgeVoters;
-  useEffect(() => {
-    const onSurge = () => {
-      for (let i = 0; i < 5; i++) surgeHandlerRef.current();
-    };
-    window.addEventListener('apex:simulate-voters', onSurge);
-    return () => window.removeEventListener('apex:simulate-voters', onSurge);
+  const send = useCallback((msg: object) => {
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(msg));
+    }
   }, []);
+
+  const requestTally = useCallback(
+    (questionId: string) => {
+      send({ type: 'tally', room: ROOM, question: questionId });
+    },
+    [send],
+  );
+
+  const startPoll = useCallback(() => {
+    setPhase('open');
+    setTimeLeft(POLL_SECONDS);
+    setNotice(null);
+    send({ type: 'poll', room: ROOM, question: qIdRef.current, action: 'open' });
+  }, [send]);
+
+  const reveal = useCallback(() => {
+    setPhase('revealed');
+    setTimeLeft(null);
+    send({ type: 'poll', room: ROOM, question: qIdRef.current, action: 'reveal' });
+  }, [send]);
+
+  const revealRef = useRef(reveal);
+  revealRef.current = reveal;
+
+  const switchQuestion = useCallback(
+    (idx: number) => {
+      const next = QUESTIONS[idx];
+      if (!next) return;
+      setQIndex(idx);
+      setPhase('idle');
+      setTimeLeft(null);
+      setVoters({});
+      setNotice(null);
+      send({ type: 'question', room: ROOM, question: next.id });
+      requestTally(next.id);
+    },
+    [send, requestTally],
+  );
+
+  const nextQuestion = useCallback(() => {
+    switchQuestion((qIndex + 1) % QUESTIONS.length);
+  }, [qIndex, switchQuestion]);
+
+  // Header primary action ("Poll Control"): start -> reveal -> next.
+  useEffect(() => {
+    const onPrimary = () => {
+      if (phase === 'open') revealRef.current();
+      else if (phase === 'revealed') nextQuestion();
+      else startPoll();
+    };
+    window.addEventListener('apex:mcq-primary', onPrimary);
+    return () => window.removeEventListener('apex:mcq-primary', onPrimary);
+  }, [phase, startPoll, nextQuestion]);
+
+  // 30-second poll countdown; the timer auto-reveals at zero.
+  useEffect(() => {
+    if (phase !== 'open' || timeLeft === null) return;
+    if (timeLeft <= 0) {
+      revealRef.current();
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft((s) => (s === null ? null : s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [phase, timeLeft]);
+
+  // Live votes over the whiteboard WebSocket room. Falls back to demo mode
+  // (votes stay on this screen) when no Java server is reachable.
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    try {
+      const host = window.location.hostname;
+      ws = new WebSocket(`ws://${host}:8090/ws/whiteboard`);
+      wsRef.current = ws;
+      ws.onopen = () => {
+        setConnected('live');
+        ws?.send(JSON.stringify({ type: 'join', room: ROOM, user: myNameRef.current, color: '#0000CD' }));
+        ws?.send(JSON.stringify({ type: 'tally', room: ROOM, question: qIdRef.current }));
+      };
+      ws.onmessage = (ev) => {
+        let msg: any;
+        try {
+          msg = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
+        if (msg.room && msg.room !== ROOM) return;
+        if (msg.type === 'snapshot' && msg.votes) {
+          const mine = msg.votes[qIdRef.current] as Record<string, OptionKey> | undefined;
+          if (mine) setVoters(mine);
+        } else if (msg.type === 'vote' && msg.question === qIdRef.current && msg.user && msg.option) {
+          setVoters((prev) => ({ ...prev, [msg.user]: msg.option }));
+        } else if (msg.type === 'tally' && msg.question === qIdRef.current && msg.voters) {
+          setVoters(msg.voters as Record<string, OptionKey>);
+        } else if (msg.type === 'question' && msg.question) {
+          const idx = QUESTIONS.findIndex((q) => q.id === msg.question);
+          if (idx >= 0) {
+            setQIndex(idx);
+            setPhase('idle');
+            setTimeLeft(null);
+            setVoters({});
+            setNotice(null);
+          }
+        } else if (msg.type === 'poll' && msg.question === qIdRef.current) {
+          if (msg.action === 'open') {
+            setPhase('open');
+            setTimeLeft(POLL_SECONDS);
+            setNotice(null);
+          } else if (msg.action === 'reveal') {
+            setPhase('revealed');
+            setTimeLeft(null);
+          }
+        }
+      };
+      ws.onerror = () => setConnected('demo');
+      ws.onclose = () => setConnected((c) => (c === 'live' ? 'demo' : c));
+    } catch {
+      setConnected('demo');
+    }
+    return () => {
+      try {
+        ws?.close();
+      } catch {
+        /* ignore */
+      }
+      wsRef.current = null;
+    };
+  }, []);
+
+  const castVote = (key: OptionKey) => {
+    if (phase !== 'open') {
+      setNotice(
+        phase === 'idle'
+          ? 'The teacher has not started the poll yet. Wait for the poll to open.'
+          : 'Poll closed. Votes are locked in, the AI Teacher is explaining the answer.',
+      );
+      return;
+    }
+    setVoters((prev) => ({ ...prev, [myName]: key }));
+    setNotice(null);
+    send({ type: 'vote', room: ROOM, question: question.id, option: key, user: myName });
+  };
 
   return (
     <div className="w-full h-full bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
-      {/* Top Banner KPI Strip */}
+      {/* Live poll KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
           <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
-            <span>Concurrent Simulated Participants</span>
+            <span>Students answered</span>
             <Users className="w-3.5 h-3.5 text-[#0000CD]" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-1.5">
-            {simulatedVoterCount.toLocaleString()}
-            <span className="text-xs font-normal text-[#404040]">agents</span>
+            {totalVotes}
+            <span className="text-xs font-normal text-[#404040]">votes</span>
           </div>
         </div>
 
         <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
           <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
-            <span>Disruptor Ingestion Speed</span>
-            <Flame className="w-3.5 h-3.5 text-[#92400E]" />
-          </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-amber-300 flex items-baseline gap-1.5">
-            {opsPerSec.toLocaleString()}
-            <span className="text-xs font-normal text-[#404040]">votes/sec</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
-            <span>Total Orders Settled</span>
-            <Cpu className="w-3.5 h-3.5 text-[#047857]" />
-          </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-emerald-300 flex items-baseline gap-1.5">
-            {totalVotesProcessed.toLocaleString()}
-            <span className="text-xs font-normal text-[#404040]">matched</span>
-          </div>
-        </div>
-
-        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
-            <span>Consensus Leader</span>
+            <span>Leading option</span>
             <Trophy className="w-3.5 h-3.5 text-yellow-400" />
           </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-yellow-300 flex items-baseline gap-2">
-            Option A
-            <span className="text-xs font-medium text-[#404040]">
-              ({currentQ.options[0].impliedOdds}% consensus)
-            </span>
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-2">
+            {leadingKey ? `Option ${leadingKey}` : '—'}
+            {leadingKey && (
+              <span className="text-xs font-medium text-[#404040]">({leadingPct}% of votes)</span>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
+            <span>Correct picks</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#047857]" />
+          </div>
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-2">
+            {phase === 'revealed' ? `${correctCount}` : '—'}
+            {phase === 'revealed' && (
+              <span className="text-xs font-medium text-[#404040]">({correctPct}% got it right)</span>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
+            <span>Time left</span>
+            <Timer className="w-3.5 h-3.5 text-[#92400E]" />
+          </div>
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-1.5">
+            {phase === 'open' && timeLeft !== null ? `${timeLeft}s` : phase === 'revealed' ? 'Closed' : 'Not started'}
           </div>
         </div>
       </div>
 
-      {/* Main MCQ Pool Section */}
+      {/* Main quiz section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left: The MCQ Question & Liquidity Options (8 Cols) */}
+        {/* Left: the question students answer (8 cols) */}
         <div className="lg:col-span-8 bg-white border border-black rounded-none p-6 flex flex-col gap-5 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
-          {/* Question Selector Tabs */}
-          <div className="flex items-center justify-between border-b border-black pb-3">
+          <div className="flex items-center justify-between border-b border-black pb-3 gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-[#0000CD]" />
               <span className="text-sm font-semibold text-black">
-                Question {currentQuestionIndex + 1} of {questions.length}
+                Question {qIndex + 1} of {QUESTIONS.length}
+              </span>
+              <span
+                className={`text-xs font-bold px-2 py-0.5 ${
+                  phase === 'open'
+                    ? 'bg-[#047857] text-white'
+                    : phase === 'revealed'
+                      ? 'bg-[#0000CD] text-white'
+                      : 'bg-[#C0C0C0] text-black'
+                }`}
+              >
+                {phase === 'open' ? 'POLL OPEN' : phase === 'revealed' ? 'ANSWER REVEALED' : 'WAITING'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              {questions.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setCurrentQuestionIndex(idx);
-                    setUserSelectedOption(null);
-                  }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-none transition-colors cursor-pointer ${
-                    currentQuestionIndex === idx
-                      ? 'bg-[#0000CD] text-white'
-                      : 'bg-[#C0C0C0] text-[#404040] hover:text-black'
-                  }`}
-                >
-                  Q{idx + 1}
-                </button>
-              ))}
-            </div>
+            <label className="flex items-center gap-1.5 text-xs text-[#404040]">
+              Answering as
+              <input
+                value={myName}
+                onChange={(e) => setMyName(e.target.value.slice(0, 20) || 'Guest')}
+                className="win-sunken px-2 py-1 text-xs font-bold text-black w-28 outline-none"
+                aria-label="Your name"
+              />
+            </label>
           </div>
 
-          {/* Question Title & Scenario */}
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold text-black tracking-tight">{currentQ.title}</h2>
-            <p className="text-xs text-[#404040] leading-relaxed">{currentQ.context}</p>
+            <h2 className="text-lg font-bold text-black tracking-tight">{question.title}</h2>
+            <p className="text-xs text-[#404040] leading-relaxed">{question.context}</p>
           </div>
 
-          {/* Interactive Multiple Choice Options with Real-Time Depth */}
+          {/* A / B / C / D: tap to vote while the poll is open */}
           <div className="flex flex-col gap-3">
-            {currentQ.options.map((opt) => {
-              const isSelected = userSelectedOption === opt.key;
+            {question.options.map((opt) => {
+              const count = tally[opt.key];
+              const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+              const isMine = myVote === opt.key;
+              const isCorrectRow = phase === 'revealed' && opt.isCorrect;
               return (
                 <div
                   key={opt.key}
-                  onClick={() => handleCastVote(opt.key)}
+                  onClick={() => castVote(opt.key)}
                   className={`relative overflow-hidden border rounded-none p-4 cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-[#0000CD] bg-indigo-950/30 ring-1 ring-indigo-500'
-                      : 'border-black bg-white hover:border-black'
+                    isCorrectRow
+                      ? 'border-[#047857] bg-[#FFFF99]'
+                      : isMine
+                        ? 'border-[#0000CD] bg-[#0000CD]/10'
+                        : 'border-black bg-white hover:border-black'
                   }`}
                 >
-                  {/* Real-time Depth Background Bar */}
+                  {/* Live vote bar */}
                   <div
                     className={`absolute inset-y-0 left-0 transition-all duration-300 pointer-events-none ${
-                      opt.key === 'A' ? 'bg-[#0000CD]/10' : 'bg-[#C0C0C0]/20'
+                      isCorrectRow ? 'bg-[#047857]/20' : 'bg-[#0000CD]/10'
                     }`}
-                    style={{ width: `${opt.impliedOdds}%` }}
+                    style={{ width: `${pct}%` }}
                   />
-
                   <div className="relative z-10 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5">
                       <div
                         className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm shrink-0 ${
-                          isSelected
-                            ? 'bg-[#0000CD] text-white'
-                            : 'bg-[#C0C0C0] text-[#1F1F1F]'
+                          isCorrectRow
+                            ? 'bg-[#047857] text-white'
+                            : isMine
+                              ? 'bg-[#0000CD] text-white'
+                              : 'bg-[#C0C0C0] text-[#1F1F1F]'
                         }`}
                       >
                         {opt.key}
@@ -363,23 +413,19 @@ export const MCQConsensusView: React.FC = () => {
                       <div className="flex flex-col">
                         <span className="text-sm font-semibold text-black">{opt.label}</span>
                         <div className="flex items-center gap-2 text-xs text-[#404040] mt-0.5 font-mono">
-                          <span>{opt.bidsCount.toLocaleString()} votes placed</span>
-                          <span>·</span>
-                          <span>{opt.poolVolume.toLocaleString()} token depth</span>
+                          <span>
+                            {count} vote{count === 1 ? '' : 's'}
+                          </span>
+                          {isMine && <span className="font-bold text-[#0000CD]">· Your pick</span>}
                         </div>
                       </div>
                     </div>
-
                     <div className="flex items-center gap-4 shrink-0 text-right font-mono">
                       <div className="flex flex-col">
-                        <span className="text-lg font-bold text-white tabular-nums">
-                          {opt.impliedOdds}%
-                        </span>
-                        <span className="text-[10px] text-[#404040] uppercase tracking-wider">
-                          Consensus
-                        </span>
+                        <span className="text-lg font-bold text-black tabular-nums">{pct}%</span>
+                        <span className="text-[10px] text-[#404040] uppercase tracking-wider">of votes</span>
                       </div>
-                      {opt.isCorrect && (
+                      {isCorrectRow && (
                         <div className="hidden sm:flex items-center gap-1 text-[#047857] text-xs font-semibold">
                           <CheckCircle2 className="w-4 h-4" />
                           <span>Correct</span>
@@ -392,82 +438,124 @@ export const MCQConsensusView: React.FC = () => {
             })}
           </div>
 
-          {userSelectedOption && (
-            <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-none flex items-center justify-between text-xs text-emerald-300">
-              <span>Your vote on Option {userSelectedOption} was ingested and matched into the pool!</span>
-              <span className="font-mono font-semibold">+250 tokens allocated</span>
-            </div>
-          )}
+          <div
+            className={`p-3 border rounded-none text-xs flex items-center justify-between gap-3 ${
+              phase === 'open'
+                ? 'bg-[#0000CD]/10 border-[#0000CD]/40 text-black'
+                : 'bg-[#C0C0C0]/40 border-black/30 text-[#404040]'
+            }`}
+          >
+            <span>
+              {phase === 'open'
+                ? myVote
+                  ? `Your answer: Option ${myVote}. Tap another option to change it before time runs out.`
+                  : 'Poll is open. Tap an option to answer.'
+                : phase === 'revealed'
+                  ? myVote
+                    ? `Poll closed. You picked Option ${myVote}${myVote === correctKey ? ', correct!' : `, the answer was Option ${correctKey}.`}`
+                    : 'Poll closed. You did not answer this one.'
+                  : 'The teacher has not started the poll yet.'}
+            </span>
+            {phase === 'open' && timeLeft !== null && (
+              <span className="font-pixel text-2xl leading-none tabular-nums shrink-0">{timeLeft}s</span>
+            )}
+          </div>
+          {notice && <div className="text-xs text-[#92400E] font-semibold">{notice}</div>}
         </div>
 
-        {/* Right: Simulation Mechanics & Swarm Controls (4 Cols) */}
+        {/* Right: teacher controls + AI Teacher (4 cols) */}
         <div className="lg:col-span-4 flex flex-col gap-4">
           <div className="bg-white border border-black rounded-none p-5 flex flex-col gap-4 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
             <h3 className="text-sm font-semibold text-black flex items-center gap-2">
               <Users className="w-4 h-4 text-[#0000CD]" />
-              Massive Multi-User Simulation
+              Teacher Controls
             </h3>
 
-            <p className="text-xs text-[#404040] leading-relaxed">
-              Simulates thousands of concurrent students or traders submitting answers to the
-              matching engine. The price-time priority algorithm balances liquidity pools and
-              computes dynamic consensus probability in sub-millisecond intervals.
-            </p>
-
-            {/* Voter Swarm Slider */}
-            <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-xs text-[#404040]">
-                <span>Simulated Participants</span>
-                <span className="font-mono text-[#0000CD]">
-                  {simulatedVoterCount.toLocaleString()}
-                </span>
-              </div>
-              <input
-                type="range"
-                min="500"
-                max="10000"
-                step="500"
-                value={simulatedVoterCount}
-                onChange={(e) => setSimulatedVoterCount(Number(e.target.value))}
-                className="w-full accent-indigo-500 cursor-pointer"
-              />
+            <div className="flex items-center gap-2">
+              {QUESTIONS.map((q, idx) => (
+                <button
+                  key={q.id}
+                  onClick={() => switchQuestion(idx)}
+                  className={`px-3 py-1 text-xs font-semibold cursor-pointer ${
+                    qIndex === idx ? 'win-btn-selected' : 'win-btn'
+                  }`}
+                >
+                  Q{idx + 1}
+                </button>
+              ))}
             </div>
 
-            {/* Swarm Actions */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="grid grid-cols-1 gap-2">
               <button
-                onClick={() => setIsSwarmActive(!isSwarmActive)}
-                className={`py-2 px-3 rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
-                  isSwarmActive
-                    ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-500'
-                }`}
+                onClick={startPoll}
+                disabled={phase !== 'idle'}
+                className="win-btn-selected py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40"
               >
-                {isSwarmActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                {isSwarmActive ? 'Pause Swarm' : 'Resume Swarm'}
+                <Play className="w-3.5 h-3.5" />
+                Start Poll (30s)
               </button>
+              <button
+                onClick={reveal}
+                disabled={phase !== 'open'}
+                className="win-btn py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Reveal Answer
+              </button>
+              <button
+                onClick={nextQuestion}
+                disabled={phase === 'open'}
+                className="win-btn py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 disabled:opacity-40"
+              >
+                Next Question
+              </button>
+            </div>
 
-              <button
-                onClick={handleSurgeVoters}
-                className="py-2 px-3 bg-[#0000CD] hover:bg-[#0000CD] text-white rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                +1,000 Votes
-              </button>
+            <div className="flex items-center gap-2 text-xs text-[#404040] border-t border-black/20 pt-3">
+              {connected === 'live' ? (
+                <>
+                  <Radio className="w-3.5 h-3.5 text-[#047857]" />
+                  <span>Live: votes sync through the Java server.</span>
+                </>
+              ) : connected === 'connecting' ? (
+                <>
+                  <Radio className="w-3.5 h-3.5 text-[#92400E]" />
+                  <span>Connecting to the Java server…</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-[#92400E]" />
+                  <span>Demo mode: no server found, votes stay on this screen.</span>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Mechanical Sympathy Note */}
-          <div className="bg-white border border-black rounded-none p-5 flex flex-col gap-2.5 shadow-[4px_4px_0_rgba(0,0,0,0.45)] text-xs text-[#404040]">
-            <span className="font-semibold text-black flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-[#047857]" />
-              Algorithmic Consensus Dynamics
+          {/* AI Teacher explains after the reveal */}
+          <div className="border-2 border-black rounded-none p-5 flex flex-col gap-2.5 shadow-[4px_4px_0_rgba(0,0,0,0.45)] text-xs text-black bg-[#FFFF99]">
+            <span className="font-semibold flex items-center gap-1.5">
+              <GraduationCap className="w-4 h-4 text-[#0000CD]" />
+              AI Teacher
             </span>
-            <p className="leading-relaxed">
-              In high-concurrency collective intelligence experiments, thousands of independent
-              agents voting via an order book filter out noisy guesses, allowing the wisdom of the
-              crowd to converge on the mathematically optimal choice with sub-microsecond latency.
-            </p>
+            {phase === 'revealed' ? (
+              <>
+                <p className="leading-relaxed">{question.explanation}</p>
+                <p className="leading-relaxed">
+                  <strong>Watch out: </strong>
+                  {question.trap}
+                </p>
+                <p className="leading-relaxed font-semibold">
+                  {totalVotes > 0
+                    ? `${correctPct}% of the class got it right. ${leadingKey === correctKey ? 'The crowd was right this time.' : `Most of the class picked Option ${leadingKey}.`}`
+                    : 'Nobody voted on this one.'}
+                </p>
+              </>
+            ) : (
+              <p className="leading-relaxed text-[#404040]">
+                The AI Teacher explains the answer once the poll closes. No peeking, answer first,
+                then learn why.
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -58,7 +58,7 @@ export default function App() {
       case 'engine':
         return 'Inject 10k Load Burst';
       case 'mcq':
-        return 'Simulate 5k Voters';
+        return 'Poll Control';
       case 'java':
         return 'Copy Java Quickstart';
     }
@@ -71,7 +71,8 @@ export default function App() {
     } else if (activeTab === 'engine') {
       window.dispatchEvent(new CustomEvent('apex:inject-burst'));
     } else if (activeTab === 'mcq') {
-      window.dispatchEvent(new CustomEvent('apex:simulate-voters'));
+      // The quiz decides: start the poll, reveal the answer, or next question.
+      window.dispatchEvent(new CustomEvent('apex:mcq-primary'));
     } else if (activeTab === 'java') {
       navigator.clipboard.writeText(JAVA_QUICKSTART);
     }
