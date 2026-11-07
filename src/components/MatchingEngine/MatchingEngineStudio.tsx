@@ -282,7 +282,7 @@ export const MatchingEngineStudio: React.FC = () => {
   const ringSlots = ringBufferRef.current.getSlots();
 
   return (
-    <div className="w-full min-h-[calc(100vh-101px)] bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full h-full bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Telemetry KPI Bar */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
         <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">

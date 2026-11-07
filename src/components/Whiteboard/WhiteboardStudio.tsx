@@ -921,7 +921,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-101px)] bg-[#008080] overflow-hidden flex flex-col select-none">
+    <div className="relative w-full h-full bg-[#008080] overflow-hidden flex flex-col select-none">
       {/* Top Floating Control Bar */}
       <div className="absolute top-3 left-2 right-2 md:right-auto md:left-6 z-20 flex items-center gap-2 bg-[#C0C0C0] border-2 border-black rounded-none px-2.5 py-1.5 md:px-3 md:py-2 shadow-[4px_4px_0_rgba(0,0,0,0.45)] overflow-x-auto max-w-[calc(100vw-16px)]">
         {/* Tool Selector Buttons */}

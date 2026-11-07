@@ -400,7 +400,7 @@ export const JavaArchitectureViewer: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-101px)] bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full h-full bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Architecture Overview Banner */}
       <div className="bg-white border border-black rounded-none p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
         <div className="flex items-center gap-3.5">

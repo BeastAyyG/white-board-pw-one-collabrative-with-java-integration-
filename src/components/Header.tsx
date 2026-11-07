@@ -8,6 +8,8 @@ interface HeaderProps {
   onTabChange: (tab: ActiveTab) => void;
   onPrimaryAction: () => void;
   primaryActionLabel: string;
+  /** Narrow window (windowed mode): icon-only nav so the header fits. */
+  compact?: boolean;
 }
 
 const TABS: { id: ActiveTab; label: string; short: string; icon: React.ReactNode }[] = [
@@ -22,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   onPrimaryAction,
   primaryActionLabel,
+  compact = false,
 }) => {
   return (
     <>
@@ -52,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className={compact ? 'hidden' : 'hidden xl:inline'}>{tab.label}</span>
             </button>
           ))}
         </nav>

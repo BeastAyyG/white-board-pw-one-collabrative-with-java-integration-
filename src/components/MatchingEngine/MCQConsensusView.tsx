@@ -239,7 +239,7 @@ export const MCQConsensusView: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full min-h-[calc(100vh-101px)] bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full h-full bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Banner KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
         <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">

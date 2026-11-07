@@ -134,3 +134,68 @@ body {
   border-top: 2px solid #ffffff;
   box-shadow: 0 -1px 0 #808080;
 }
+
+/* Blue gradient title bar, like a real Win95 active window. */
+.win-titlebar-gradient {
+  background: linear-gradient(90deg, #000080 0%, #0000cd 60%, #1084d0 100%);
+  color: #ffffff;
+}
+
+/* Small square buttons on a title bar (_ □ X ?). */
+.win-title-btn {
+  width: 22px;
+  height: 20px;
+  background: #c0c0c0;
+  color: #000000;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #0a0a0a;
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.win-title-btn:active {
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+}
+
+/* Marquee strip, like the deck's repeating "Agenda •" band. */
+@keyframes win-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.win-marquee-track {
+  animation: win-marquee 28s linear infinite;
+}
+
+/* Retro scrollbars: silver track, raised thumb. */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #dfdfdf;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4;
+}
+::-webkit-scrollbar-corner {
+  background: #dfdfdf;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #dfdfdf;
+}
