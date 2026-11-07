@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Activity, HelpCircle, FileCode, Play, Sparkles } from 'lucide-react';
+import { Layers, Activity, HelpCircle, FileCode, Sparkles } from 'lucide-react';
 
 export type ActiveTab = 'whiteboard' | 'engine' | 'mcq' | 'java';
 
@@ -10,6 +10,13 @@ interface HeaderProps {
   primaryActionLabel: string;
 }
 
+const TABS: { id: ActiveTab; label: string; short: string; icon: React.ReactNode }[] = [
+  { id: 'whiteboard', label: 'Whiteboard Studio', short: 'Whiteboard', icon: <Layers className="w-4 h-4" /> },
+  { id: 'engine', label: 'LMAX Disruptor Engine', short: 'Disruptor', icon: <Activity className="w-4 h-4" /> },
+  { id: 'mcq', label: 'Virtual MCQ Consensus', short: 'MCQ Pool', icon: <HelpCircle className="w-4 h-4" /> },
+  { id: 'java', label: 'Java 21 Architecture', short: 'Java 21', icon: <FileCode className="w-4 h-4" /> },
+];
+
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onTabChange,
@@ -18,129 +25,65 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <>
-      <header className="flex items-center justify-between gap-8 px-6 py-3.5 bg-slate-900 border-b border-slate-800 text-white select-none">
-      {/* Zone 1: Brand Wordmark (Single Text Element) */}
-      <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-          ⚡
+      <header className="flex items-center justify-between gap-4 px-3 py-2 bg-[#C0C0C0] border-b-2 border-black text-black select-none">
+        {/* Zone 1: Brand Wordmark */}
+        <div className="flex items-center gap-2 whitespace-nowrap shrink-0">
+          <div className="w-8 h-8 win-titlebar-blue flex items-center justify-center font-pixel text-2xl leading-none border-2 border-black">
+            &#9783;
+          </div>
+          <div className="leading-none">
+            <span className="font-pixel text-[24px] leading-none tracking-wide block">
+              COLLABORATIVE WHITEBOARD
+            </span>
+            <span className="text-[11px] font-bold block mt-0.5">
+              the null pointers &middot; CSE 213
+            </span>
+          </div>
         </div>
-        <span className="text-base font-semibold tracking-tight text-slate-100">
-          Apex Engine & Canvas
-        </span>
-      </div>
 
-      {/* Zone 2: Navigation Links (Single-Line, 4 Clean Links) */}
-      <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-400">
-        <button
-          onClick={() => onTabChange('whiteboard')}
-          className={`flex items-center gap-2 pb-0.5 transition-colors whitespace-nowrap shrink-0 ${
-            activeTab === 'whiteboard'
-              ? 'text-white border-b-2 border-indigo-500 font-semibold'
-              : 'hover:text-slate-200'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-indigo-400" />
-          Whiteboard Studio
-        </button>
+        {/* Zone 2: Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1.5 text-xs font-bold">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex items-center gap-1.5 px-2 py-1.5 whitespace-nowrap shrink-0 ${
+                activeTab === tab.id ? 'win-btn-selected' : 'win-btn'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </nav>
 
-        <button
-          onClick={() => onTabChange('engine')}
-          className={`flex items-center gap-2 pb-0.5 transition-colors whitespace-nowrap shrink-0 ${
-            activeTab === 'engine'
-              ? 'text-white border-b-2 border-indigo-500 font-semibold'
-              : 'hover:text-slate-200'
-          }`}
-        >
-          <Activity className="w-4 h-4 text-emerald-400" />
-          LMAX Disruptor Engine
-        </button>
+        {/* Zone 3: Primary Action Button */}
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={onPrimaryAction}
+            className="win-btn-selected flex items-center gap-2 px-3 py-1.5 text-xs font-bold whitespace-nowrap shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="truncate max-w-[120px] md:max-w-none">{primaryActionLabel}</span>
+          </button>
+        </div>
+      </header>
 
-        <button
-          onClick={() => onTabChange('mcq')}
-          className={`flex items-center gap-2 pb-0.5 transition-colors whitespace-nowrap shrink-0 ${
-            activeTab === 'mcq'
-              ? 'text-white border-b-2 border-indigo-500 font-semibold'
-              : 'hover:text-slate-200'
-          }`}
-        >
-          <HelpCircle className="w-4 h-4 text-amber-400" />
-          Virtual MCQ Consensus
-        </button>
-
-        <button
-          onClick={() => onTabChange('java')}
-          className={`flex items-center gap-2 pb-0.5 transition-colors whitespace-nowrap shrink-0 ${
-            activeTab === 'java'
-              ? 'text-white border-b-2 border-indigo-500 font-semibold'
-              : 'hover:text-slate-200'
-          }`}
-        >
-          <FileCode className="w-4 h-4 text-sky-400" />
-          Java 21 Architecture
-        </button>
+      {/* Mobile Navigation Bar (Visible only on < md screens) */}
+      <nav className="flex md:hidden items-center justify-around bg-[#C0C0C0] border-b-2 border-black px-2 py-2 text-xs font-bold overflow-x-auto">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 whitespace-nowrap shrink-0 ${
+              activeTab === tab.id ? 'win-btn-selected' : 'win-btn'
+            }`}
+          >
+            {tab.icon}
+            {tab.short}
+          </button>
+        ))}
       </nav>
-
-      {/* Zone 3: Primary Action Button */}
-      <div className="flex items-center gap-3 shrink-0">
-        <button
-          onClick={onPrimaryAction}
-          className="flex items-center gap-2 px-3.5 py-1.5 md:px-4 md:py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 rounded-lg shadow-sm transition-all whitespace-nowrap shrink-0 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span className="truncate max-w-[140px] md:max-w-none">{primaryActionLabel}</span>
-        </button>
-      </div>
-    </header>
-
-    {/* Mobile Navigation Bar (Visible only on < md screens) */}
-    <nav className="flex md:hidden items-center justify-around bg-slate-900/95 border-b border-slate-800 px-2 py-2 text-xs font-medium text-slate-400 overflow-x-auto">
-      <button
-        onClick={() => onTabChange('whiteboard')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 ${
-          activeTab === 'whiteboard'
-            ? 'bg-indigo-600/20 text-indigo-300 font-semibold border border-indigo-500/40'
-            : 'hover:text-slate-200'
-        }`}
-      >
-        <Layers className="w-3.5 h-3.5" />
-        Whiteboard
-      </button>
-
-      <button
-        onClick={() => onTabChange('engine')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 ${
-          activeTab === 'engine'
-            ? 'bg-emerald-600/20 text-emerald-300 font-semibold border border-emerald-500/40'
-            : 'hover:text-slate-200'
-        }`}
-      >
-        <Activity className="w-3.5 h-3.5" />
-        Disruptor
-      </button>
-
-      <button
-        onClick={() => onTabChange('mcq')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 ${
-          activeTab === 'mcq'
-            ? 'bg-amber-600/20 text-amber-300 font-semibold border border-amber-500/40'
-            : 'hover:text-slate-200'
-        }`}
-      >
-        <HelpCircle className="w-3.5 h-3.5" />
-        MCQ Pool
-      </button>
-
-      <button
-        onClick={() => onTabChange('java')}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors whitespace-nowrap shrink-0 ${
-          activeTab === 'java'
-            ? 'bg-sky-600/20 text-sky-300 font-semibold border border-sky-500/40'
-            : 'hover:text-slate-200'
-        }`}
-      >
-        <FileCode className="w-3.5 h-3.5" />
-        Java 21
-      </button>
-    </nav>
-  </>);
+    </>
+  );
 };

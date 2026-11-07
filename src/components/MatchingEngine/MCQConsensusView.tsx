@@ -239,50 +239,50 @@ export const MCQConsensusView: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full min-h-[calc(100vh-61px)] bg-[#0B0F19] text-slate-100 p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full min-h-[calc(100vh-101px)] bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Banner KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Concurrent Simulated Participants</span>
-            <Users className="w-3.5 h-3.5 text-indigo-400" />
+            <Users className="w-3.5 h-3.5 text-[#0000CD]" />
           </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-white flex items-baseline gap-1.5">
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-1.5">
             {simulatedVoterCount.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">agents</span>
+            <span className="text-xs font-normal text-[#404040]">agents</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Disruptor Ingestion Speed</span>
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-[#92400E]" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-amber-300 flex items-baseline gap-1.5">
             {opsPerSec.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">votes/sec</span>
+            <span className="text-xs font-normal text-[#404040]">votes/sec</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Total Orders Settled</span>
-            <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+            <Cpu className="w-3.5 h-3.5 text-[#047857]" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-emerald-300 flex items-baseline gap-1.5">
             {totalVotesProcessed.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">matched</span>
+            <span className="text-xs font-normal text-[#404040]">matched</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Consensus Leader</span>
             <Trophy className="w-3.5 h-3.5 text-yellow-400" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-yellow-300 flex items-baseline gap-2">
             Option A
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-[#404040]">
               ({currentQ.options[0].impliedOdds}% consensus)
             </span>
           </div>
@@ -292,12 +292,12 @@ export const MCQConsensusView: React.FC = () => {
       {/* Main MCQ Pool Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: The MCQ Question & Liquidity Options (8 Cols) */}
-        <div className="lg:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col gap-5 shadow-xl">
+        <div className="lg:col-span-8 bg-white border border-black rounded-none p-6 flex flex-col gap-5 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
           {/* Question Selector Tabs */}
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center justify-between border-b border-black pb-3">
             <div className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-indigo-400" />
-              <span className="text-sm font-semibold text-slate-200">
+              <HelpCircle className="w-5 h-5 text-[#0000CD]" />
+              <span className="text-sm font-semibold text-black">
                 Question {currentQuestionIndex + 1} of {questions.length}
               </span>
             </div>
@@ -309,10 +309,10 @@ export const MCQConsensusView: React.FC = () => {
                     setCurrentQuestionIndex(idx);
                     setUserSelectedOption(null);
                   }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-none transition-colors cursor-pointer ${
                     currentQuestionIndex === idx
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-[#0000CD] text-white'
+                      : 'bg-[#C0C0C0] text-[#404040] hover:text-black'
                   }`}
                 >
                   Q{idx + 1}
@@ -323,8 +323,8 @@ export const MCQConsensusView: React.FC = () => {
 
           {/* Question Title & Scenario */}
           <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold text-white tracking-tight">{currentQ.title}</h2>
-            <p className="text-xs text-slate-400 leading-relaxed">{currentQ.context}</p>
+            <h2 className="text-lg font-bold text-black tracking-tight">{currentQ.title}</h2>
+            <p className="text-xs text-[#404040] leading-relaxed">{currentQ.context}</p>
           </div>
 
           {/* Interactive Multiple Choice Options with Real-Time Depth */}
@@ -335,16 +335,16 @@ export const MCQConsensusView: React.FC = () => {
                 <div
                   key={opt.key}
                   onClick={() => handleCastVote(opt.key)}
-                  className={`relative overflow-hidden border rounded-xl p-4 cursor-pointer transition-all ${
+                  className={`relative overflow-hidden border rounded-none p-4 cursor-pointer transition-all ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-950/30 ring-1 ring-indigo-500'
-                      : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
+                      ? 'border-[#0000CD] bg-indigo-950/30 ring-1 ring-indigo-500'
+                      : 'border-black bg-white hover:border-black'
                   }`}
                 >
                   {/* Real-time Depth Background Bar */}
                   <div
                     className={`absolute inset-y-0 left-0 transition-all duration-300 pointer-events-none ${
-                      opt.key === 'A' ? 'bg-indigo-600/20' : 'bg-slate-800/20'
+                      opt.key === 'A' ? 'bg-[#0000CD]/10' : 'bg-[#C0C0C0]/20'
                     }`}
                     style={{ width: `${opt.impliedOdds}%` }}
                   />
@@ -352,17 +352,17 @@ export const MCQConsensusView: React.FC = () => {
                   <div className="relative z-10 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3.5">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
+                        className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm shrink-0 ${
                           isSelected
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-800 text-slate-300'
+                            ? 'bg-[#0000CD] text-white'
+                            : 'bg-[#C0C0C0] text-[#1F1F1F]'
                         }`}
                       >
                         {opt.key}
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-100">{opt.label}</span>
-                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 font-mono">
+                        <span className="text-sm font-semibold text-black">{opt.label}</span>
+                        <div className="flex items-center gap-2 text-xs text-[#404040] mt-0.5 font-mono">
                           <span>{opt.bidsCount.toLocaleString()} votes placed</span>
                           <span>·</span>
                           <span>{opt.poolVolume.toLocaleString()} token depth</span>
@@ -375,12 +375,12 @@ export const MCQConsensusView: React.FC = () => {
                         <span className="text-lg font-bold text-white tabular-nums">
                           {opt.impliedOdds}%
                         </span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">
+                        <span className="text-[10px] text-[#404040] uppercase tracking-wider">
                           Consensus
                         </span>
                       </div>
                       {opt.isCorrect && (
-                        <div className="hidden sm:flex items-center gap-1 text-emerald-400 text-xs font-semibold">
+                        <div className="hidden sm:flex items-center gap-1 text-[#047857] text-xs font-semibold">
                           <CheckCircle2 className="w-4 h-4" />
                           <span>Correct</span>
                         </div>
@@ -393,7 +393,7 @@ export const MCQConsensusView: React.FC = () => {
           </div>
 
           {userSelectedOption && (
-            <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex items-center justify-between text-xs text-emerald-300">
+            <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-none flex items-center justify-between text-xs text-emerald-300">
               <span>Your vote on Option {userSelectedOption} was ingested and matched into the pool!</span>
               <span className="font-mono font-semibold">+250 tokens allocated</span>
             </div>
@@ -402,13 +402,13 @@ export const MCQConsensusView: React.FC = () => {
 
         {/* Right: Simulation Mechanics & Swarm Controls (4 Cols) */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
-            <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <Users className="w-4 h-4 text-indigo-400" />
+          <div className="bg-white border border-black rounded-none p-5 flex flex-col gap-4 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+            <h3 className="text-sm font-semibold text-black flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#0000CD]" />
               Massive Multi-User Simulation
             </h3>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-[#404040] leading-relaxed">
               Simulates thousands of concurrent students or traders submitting answers to the
               matching engine. The price-time priority algorithm balances liquidity pools and
               computes dynamic consensus probability in sub-millisecond intervals.
@@ -416,9 +416,9 @@ export const MCQConsensusView: React.FC = () => {
 
             {/* Voter Swarm Slider */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex justify-between text-xs text-[#404040]">
                 <span>Simulated Participants</span>
-                <span className="font-mono text-indigo-400">
+                <span className="font-mono text-[#0000CD]">
                   {simulatedVoterCount.toLocaleString()}
                 </span>
               </div>
@@ -437,7 +437,7 @@ export const MCQConsensusView: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 pt-2">
               <button
                 onClick={() => setIsSwarmActive(!isSwarmActive)}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`py-2 px-3 rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                   isSwarmActive
                     ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60'
                     : 'bg-emerald-600 text-white hover:bg-emerald-500'
@@ -449,7 +449,7 @@ export const MCQConsensusView: React.FC = () => {
 
               <button
                 onClick={handleSurgeVoters}
-                className="py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                className="py-2 px-3 bg-[#0000CD] hover:bg-[#0000CD] text-white rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 +1,000 Votes
@@ -458,9 +458,9 @@ export const MCQConsensusView: React.FC = () => {
           </div>
 
           {/* Mechanical Sympathy Note */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col gap-2.5 shadow-xl text-xs text-slate-400">
-            <span className="font-semibold text-slate-200 flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+          <div className="bg-white border border-black rounded-none p-5 flex flex-col gap-2.5 shadow-[4px_4px_0_rgba(0,0,0,0.45)] text-xs text-[#404040]">
+            <span className="font-semibold text-black flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-[#047857]" />
               Algorithmic Consensus Dynamics
             </span>
             <p className="leading-relaxed">

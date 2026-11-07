@@ -34,8 +34,15 @@ export default function App() {
     }
   };
 
+  const tabNames: Record<ActiveTab, string> = {
+    whiteboard: 'Whiteboard Studio',
+    engine: 'LMAX Disruptor Engine',
+    mcq: 'Virtual MCQ Consensus',
+    java: 'Java 21 Architecture',
+  };
+
   return (
-    <div className="min-h-screen bg-[#0B0F19] flex flex-col font-sans text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen win-desktop flex flex-col font-win text-black antialiased">
       <Header
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
@@ -43,12 +50,29 @@ export default function App() {
         primaryActionLabel={getPrimaryActionLabel()}
       />
 
-      <main className="flex-1 w-full overflow-hidden">
+      <main className="flex-1 w-full overflow-hidden min-h-0">
         {activeTab === 'whiteboard' && <WhiteboardStudio />}
         {activeTab === 'engine' && <MatchingEngineStudio />}
         {activeTab === 'mcq' && <MCQConsensusView />}
         {activeTab === 'java' && <JavaArchitectureViewer />}
       </main>
+
+      {/* Taskbar */}
+      <footer className="win-taskbar h-10 shrink-0 flex items-center gap-2 px-2 text-black select-none">
+        <button
+          type="button"
+          className="win-btn px-3 py-1 text-sm font-bold flex items-center gap-1.5"
+          title="the null pointers"
+        >
+          <span aria-hidden="true">&#9632;</span> Start
+        </button>
+        <span className="win-sunken px-2 py-1 text-xs truncate">
+          {tabNames[activeTab]}
+        </span>
+        <span className="ml-auto font-pixel text-xl leading-none tracking-wide">
+          SRM UNIVERSITY, AP | 2026 - 27
+        </span>
+      </footer>
     </div>
   );
 }

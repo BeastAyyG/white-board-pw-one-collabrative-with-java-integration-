@@ -282,63 +282,63 @@ export const MatchingEngineStudio: React.FC = () => {
   const ringSlots = ringBufferRef.current.getSlots();
 
   return (
-    <div className="w-full min-h-[calc(100vh-61px)] bg-[#0B0F19] text-slate-100 p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full min-h-[calc(100vh-101px)] bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Telemetry KPI Bar */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Throughput</span>
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            <Flame className="w-3.5 h-3.5 text-[#92400E]" />
           </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-white flex items-baseline gap-1.5">
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-1.5">
             {metrics.throughputOpsSec.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">ops/sec</span>
+            <span className="text-xs font-normal text-[#404040]">ops/sec</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>p99 Latency</span>
-            <Zap className="w-3.5 h-3.5 text-indigo-400" />
+            <Zap className="w-3.5 h-3.5 text-[#0000CD]" />
           </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-indigo-300 flex items-baseline gap-1.5">
+          <div className="text-xl font-bold font-mono tabular-nums text-[#0000CD] flex items-baseline gap-1.5">
             {metrics.p99LatencyUs}
-            <span className="text-xs font-normal text-slate-500">μs</span>
+            <span className="text-xs font-normal text-[#404040]">μs</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Simulated Traders</span>
-            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <Activity className="w-3.5 h-3.5 text-[#047857]" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-emerald-300 flex items-baseline gap-1.5">
             {simulatedTradersCount.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">agents</span>
+            <span className="text-xs font-normal text-[#404040]">agents</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Mid Price & Spread</span>
-            <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
+            <TrendingUp className="w-3.5 h-3.5 text-[#0369A1]" />
           </div>
-          <div className="text-xl font-bold font-mono tabular-nums text-white flex items-baseline gap-2">
+          <div className="text-xl font-bold font-mono tabular-nums text-black flex items-baseline gap-2">
             ${orderBook.midPrice.toFixed(2)}
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-[#404040]">
               spread ${orderBook.spread.toFixed(2)}
             </span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 flex flex-col">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+        <div className="bg-white border border-black rounded-none p-3.5 flex flex-col">
+          <div className="flex items-center justify-between text-xs text-[#404040] mb-1">
             <span>Total Matched</span>
             <Cpu className="w-3.5 h-3.5 text-purple-400" />
           </div>
           <div className="text-xl font-bold font-mono tabular-nums text-purple-300 flex items-baseline gap-1.5">
             {metrics.totalProcessed.toLocaleString()}
-            <span className="text-xs font-normal text-slate-500">events</span>
+            <span className="text-xs font-normal text-[#404040]">events</span>
           </div>
         </div>
       </div>
@@ -346,19 +346,19 @@ export const MatchingEngineStudio: React.FC = () => {
       {/* Main Grid: Order Book + LMAX RingBuffer + Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Column: L2 Order Book Ladder (5 Cols) */}
-        <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-xl">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div className="lg:col-span-5 bg-white border border-black rounded-none p-4 flex flex-col gap-3 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+          <div className="flex items-center justify-between border-b border-black pb-2.5">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-indigo-400" />
-              <h2 className="text-sm font-semibold text-slate-100">
+              <BarChart3 className="w-4 h-4 text-[#0000CD]" />
+              <h2 className="text-sm font-semibold text-black">
                 L2 Depth Order Book (FIFO Priority)
               </h2>
             </div>
-            <span className="text-xs font-mono text-slate-400">BTC/USD</span>
+            <span className="text-xs font-mono text-[#404040]">BTC/USD</span>
           </div>
 
           {/* Book Headers */}
-          <div className="grid grid-cols-3 text-xs font-medium text-slate-400 px-2 py-1 bg-slate-950/40 rounded-lg">
+          <div className="grid grid-cols-3 text-xs font-medium text-black px-2 py-1 bg-[#C0C0C0] rounded-none border border-black">
             <span>Price (USD)</span>
             <span className="text-right">Size</span>
             <span className="text-right">Depth</span>
@@ -371,30 +371,30 @@ export const MatchingEngineStudio: React.FC = () => {
               return (
                 <div
                   key={`ask-${ask.price}`}
-                  className="relative grid grid-cols-3 text-xs font-mono tabular-nums px-2 py-1.5 rounded hover:bg-slate-800/50 transition-colors"
+                  className="relative grid grid-cols-3 text-xs font-mono tabular-nums px-2 py-1.5 rounded hover:bg-[#D4D4D4]/50 transition-colors"
                 >
                   <div
                     className="absolute inset-y-0 right-0 bg-rose-500/15 rounded pointer-events-none"
                     style={{ width: `${depthPct}%` }}
                   />
-                  <span className="text-rose-400 font-semibold relative z-10">
+                  <span className="text-[#DC2626] font-semibold relative z-10">
                     ${ask.price.toFixed(2)}
                   </span>
-                  <span className="text-right text-slate-300 relative z-10">{ask.totalVolume}</span>
-                  <span className="text-right text-slate-500 relative z-10">{depthPct}%</span>
+                  <span className="text-right text-[#1F1F1F] relative z-10">{ask.totalVolume}</span>
+                  <span className="text-right text-[#404040] relative z-10">{depthPct}%</span>
                 </div>
               );
             })}
           </div>
 
           {/* Mid Market Spread Bar */}
-          <div className="flex items-center justify-between px-3 py-2 bg-slate-950/70 border-y border-slate-800 rounded-lg text-xs font-mono">
-            <span className="text-slate-400">
+          <div className="flex items-center justify-between px-3 py-2 bg-slate-950/70 border-y border-black rounded-none text-xs font-mono">
+            <span className="text-[#D4D4D4]">
               Spread: <strong className="text-white">${orderBook.spread.toFixed(2)}</strong>
             </span>
-            <span className="text-slate-400">
+            <span className="text-[#D4D4D4]">
               Last Executed:{' '}
-              <strong className="text-emerald-400">${orderBook.lastTradePrice.toFixed(2)}</strong>
+              <strong className="text-[#047857]">${orderBook.lastTradePrice.toFixed(2)}</strong>
             </span>
           </div>
 
@@ -405,17 +405,17 @@ export const MatchingEngineStudio: React.FC = () => {
               return (
                 <div
                   key={`bid-${bid.price}`}
-                  className="relative grid grid-cols-3 text-xs font-mono tabular-nums px-2 py-1.5 rounded hover:bg-slate-800/50 transition-colors"
+                  className="relative grid grid-cols-3 text-xs font-mono tabular-nums px-2 py-1.5 rounded hover:bg-[#D4D4D4]/50 transition-colors"
                 >
                   <div
                     className="absolute inset-y-0 right-0 bg-emerald-500/15 rounded pointer-events-none"
                     style={{ width: `${depthPct}%` }}
                   />
-                  <span className="text-emerald-400 font-semibold relative z-10">
+                  <span className="text-[#047857] font-semibold relative z-10">
                     ${bid.price.toFixed(2)}
                   </span>
-                  <span className="text-right text-slate-300 relative z-10">{bid.totalVolume}</span>
-                  <span className="text-right text-slate-500 relative z-10">{depthPct}%</span>
+                  <span className="text-right text-[#1F1F1F] relative z-10">{bid.totalVolume}</span>
+                  <span className="text-right text-[#404040] relative z-10">{depthPct}%</span>
                 </div>
               );
             })}
@@ -423,23 +423,23 @@ export const MatchingEngineStudio: React.FC = () => {
         </div>
 
         {/* Middle Column: LMAX Disruptor Ring Buffer Visualizer (4 Cols) */}
-        <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3.5 shadow-xl">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div className="lg:col-span-4 bg-white border border-black rounded-none p-4 flex flex-col gap-3.5 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
+          <div className="flex items-center justify-between border-b border-black pb-2.5">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-400" />
-              <h2 className="text-sm font-semibold text-slate-100">
+              <Layers className="w-4 h-4 text-[#0000CD]" />
+              <h2 className="text-sm font-semibold text-black">
                 LMAX Disruptor RingBuffer (64 Slots)
               </h2>
             </div>
-            <span className="text-xs font-mono text-indigo-400">
+            <span className="text-xs font-mono text-[#0000CD]">
               Usage: {metrics.ringBufferUsage}%
             </span>
           </div>
 
           {/* Pipeline Stages Legend */}
-          <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-400 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-black bg-[#E8E8E8] p-2.5 rounded-none border border-black">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#0000CD]" />
               <span>1. Producer Seq: {metrics.producerCursor}</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -457,10 +457,10 @@ export const MatchingEngineStudio: React.FC = () => {
           </div>
 
           {/* 64-Slot Visual Grid */}
-          <div className="grid grid-cols-8 gap-1.5 p-2 bg-slate-950/80 rounded-xl border border-slate-800/80">
+          <div className="grid grid-cols-8 gap-1.5 p-2 bg-slate-950/80 rounded-none border border-black/80">
             {ringSlots.map((slot) => {
-              let bg = 'bg-slate-800/40 border-slate-800 text-slate-600';
-              if (slot.state === 'PUBLISHED') bg = 'bg-indigo-500/80 border-indigo-400 text-white';
+              let bg = 'bg-[#D4D4D4] border-black text-slate-600';
+              if (slot.state === 'PUBLISHED') bg = 'bg-[#0000CD]/80 border-indigo-400 text-white';
               else if (slot.state === 'JOURNALED') bg = 'bg-pink-500/80 border-pink-400 text-white';
               else if (slot.state === 'MATCHED') bg = 'bg-emerald-500/80 border-emerald-400 text-white';
               else if (slot.state === 'DISPATCHED') bg = 'bg-sky-500/50 border-sky-400 text-sky-100';
@@ -479,8 +479,8 @@ export const MatchingEngineStudio: React.FC = () => {
 
           {/* Real-time Trade Execution Tape */}
           <div className="flex flex-col gap-2 mt-auto">
-            <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-1">
-              <span className="font-semibold text-slate-300">Live Trade Tape</span>
+            <div className="flex items-center justify-between text-xs text-[#404040] border-b border-black pb-1">
+              <span className="font-semibold text-[#1F1F1F]">Live Trade Tape</span>
               <span className="font-mono">{recentTrades.length} printed</span>
             </div>
             <div className="flex flex-col gap-1 max-h-36 overflow-y-auto font-mono text-xs">
@@ -491,18 +491,18 @@ export const MatchingEngineStudio: React.FC = () => {
                 >
                   <div className="flex items-center gap-1.5">
                     {tr.aggressiveSide === 'BUY' ? (
-                      <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400" />
+                      <ArrowUpRight className="w-3.5 h-3.5 text-[#047857]" />
                     ) : (
-                      <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" />
+                      <ArrowDownRight className="w-3.5 h-3.5 text-[#DC2626]" />
                     )}
                     <span
-                      className={tr.aggressiveSide === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}
+                      className={tr.aggressiveSide === 'BUY' ? 'text-[#047857]' : 'text-[#DC2626]'}
                     >
                       ${tr.price.toFixed(2)}
                     </span>
                   </div>
-                  <span className="text-slate-300">{tr.size} units</span>
-                  <span className="text-slate-500 text-[10px]">
+                  <span className="text-[#1F1F1F]">{tr.size} units</span>
+                  <span className="text-[#404040] text-[10px]">
                     {new Date(tr.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
@@ -514,19 +514,19 @@ export const MatchingEngineStudio: React.FC = () => {
         {/* Right Column: Simulation Controller & Order Entry (3 Cols) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
           {/* Concurrency Simulation Control */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-xl">
+          <div className="bg-white border border-black rounded-none p-4 flex flex-col gap-3 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-semibold text-black flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#047857]" />
                 Concurrent Multi-User Bot Swarm
               </h3>
             </div>
 
             {/* Simulated Traders Slider */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex justify-between text-xs text-[#404040]">
                 <span>Active Virtual Traders</span>
-                <span className="font-mono text-emerald-400">{simulatedTradersCount} bots</span>
+                <span className="font-mono text-[#047857]">{simulatedTradersCount} bots</span>
               </div>
               <input
                 type="range"
@@ -541,9 +541,9 @@ export const MatchingEngineStudio: React.FC = () => {
 
             {/* Target Ops/Sec Slider */}
             <div className="flex flex-col gap-1.5">
-              <div className="flex justify-between text-xs text-slate-400">
+              <div className="flex justify-between text-xs text-[#404040]">
                 <span>Load Target (Ops/sec)</span>
-                <span className="font-mono text-amber-400">{targetOpsPerSec} ops/s</span>
+                <span className="font-mono text-[#92400E]">{targetOpsPerSec} ops/s</span>
               </div>
               <input
                 type="range"
@@ -560,7 +560,7 @@ export const MatchingEngineStudio: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 mt-1">
               <button
                 onClick={() => setIsSimulating(!isSimulating)}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`py-2 px-3 rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                   isSimulating
                     ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60'
                     : 'bg-emerald-600 text-white hover:bg-emerald-500'
@@ -572,7 +572,7 @@ export const MatchingEngineStudio: React.FC = () => {
 
               <button
                 onClick={handleInjectBurst}
-                className="py-2 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                className="py-2 px-3 bg-[#0000CD] hover:bg-[#0000CD] text-white rounded-none text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
                 <Flame className="w-3.5 h-3.5 text-amber-300" />
                 +500 Burst
@@ -583,17 +583,17 @@ export const MatchingEngineStudio: React.FC = () => {
           {/* Manual Order Entry */}
           <form
             onSubmit={handleManualOrderSubmit}
-            className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-xl"
+            className="bg-white border border-black rounded-none p-4 flex flex-col gap-3 shadow-[4px_4px_0_rgba(0,0,0,0.45)]"
           >
-            <h3 className="text-sm font-semibold text-slate-100">Submit Manual Order</h3>
+            <h3 className="text-sm font-semibold text-black">Submit Manual Order</h3>
 
             {/* Buy / Sell Buttons */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950 rounded-lg">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950 rounded-none">
               <button
                 type="button"
                 onClick={() => setOrderSide('BUY')}
                 className={`py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  orderSide === 'BUY' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                  orderSide === 'BUY' ? 'bg-emerald-600 text-white' : 'text-[#404040] hover:text-black'
                 }`}
               >
                 Buy (Bid)
@@ -602,7 +602,7 @@ export const MatchingEngineStudio: React.FC = () => {
                 type="button"
                 onClick={() => setOrderSide('SELL')}
                 className={`py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                  orderSide === 'SELL' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+                  orderSide === 'SELL' ? 'bg-rose-600 text-white' : 'text-[#404040] hover:text-black'
                 }`}
               >
                 Sell (Ask)
@@ -610,12 +610,12 @@ export const MatchingEngineStudio: React.FC = () => {
             </div>
 
             {/* Limit / Market Toggle */}
-            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950 rounded-lg">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-950 rounded-none">
               <button
                 type="button"
                 onClick={() => setOrderType('LIMIT')}
                 className={`py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                  orderType === 'LIMIT' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+                  orderType === 'LIMIT' ? 'bg-[#0000CD] text-white' : 'text-[#404040] hover:text-black'
                 }`}
               >
                 Limit
@@ -624,7 +624,7 @@ export const MatchingEngineStudio: React.FC = () => {
                 type="button"
                 onClick={() => setOrderType('MARKET')}
                 className={`py-1 text-xs font-medium rounded-md transition-all cursor-pointer ${
-                  orderType === 'MARKET' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'
+                  orderType === 'MARKET' ? 'bg-[#0000CD] text-white' : 'text-[#404040] hover:text-black'
                 }`}
               >
                 Market
@@ -634,33 +634,33 @@ export const MatchingEngineStudio: React.FC = () => {
             {/* Price Field */}
             {orderType === 'LIMIT' && (
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] text-slate-400">Price (USD)</label>
+                <label className="text-[11px] text-[#404040]">Price (USD)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={orderPrice}
                   onChange={(e) => setOrderPrice(Number(e.target.value))}
-                  className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
+                  className="bg-slate-950 border border-black rounded-none px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#0000CD]"
                 />
               </div>
             )}
 
             {/* Size Field */}
             <div className="flex flex-col gap-1">
-              <label className="text-[11px] text-slate-400">Quantity (Units)</label>
+              <label className="text-[11px] text-[#404040]">Quantity (Units)</label>
               <input
                 type="number"
                 min="1"
                 max="1000"
                 value={orderSize}
                 onChange={(e) => setOrderSize(Number(e.target.value))}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-indigo-500"
+                className="bg-slate-950 border border-black rounded-none px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#0000CD]"
               />
             </div>
 
             <button
               type="submit"
-              className={`w-full py-2 rounded-lg text-xs font-semibold shadow-md transition-all cursor-pointer ${
+              className={`w-full py-2 rounded-none text-xs font-semibold shadow-md transition-all cursor-pointer ${
                 orderSide === 'BUY'
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
                   : 'bg-rose-600 hover:bg-rose-500 text-white'
