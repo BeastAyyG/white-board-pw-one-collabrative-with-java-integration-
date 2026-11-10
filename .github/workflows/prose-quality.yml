@@ -1,0 +1,38 @@
+name: Prose quality gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  avoid-ai-writing:
+    name: Avoid AI Writing Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Avoid AI Writing Gate
+        id: gate
+        uses: conorbronsdon/avoid-ai-writing@v3.38.0
+        with:
+          glob: "**/*.md"
+          threshold: "6"
+          context: technical
+          source-mode: rendered-markdown
+
+      - name: Report gate result
+        if: always()
+        run: |
+          {
+            echo "### Avoid AI Writing Gate"
+            echo "- pass: ${{ steps.gate.outputs.pass }}"
+            echo "- total findings: ${{ steps.gate.outputs.total-findings }}"
+            echo "- failed files: ${{ steps.gate.outputs.failed-files }}"
+          } >> "$GITHUB_STEP_SUMMARY"
