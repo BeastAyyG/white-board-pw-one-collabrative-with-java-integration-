@@ -151,7 +151,8 @@ public final class WhiteboardServer {
             room.members.add(ctx.channel());
             ctx.channel().attr(ROOMS).get().add(roomName);
 
-            String user = msg.path("user").asText("anonymous");
+            // Accept "user" (protocol) and "name" (older clients).
+            String user = msg.path("user").asText(msg.path("name").asText("anonymous"));
             ctx.channel().attr(USER).set(user);
 
             // Snapshot current state to the joiner only.
@@ -364,7 +365,7 @@ public final class WhiteboardServer {
     }
 
     public static void main(String[] args) throws Exception {
-        int port = 8080;
+        int port = 8090; // the web workbench connects to ws://<host>:8090
         if (args.length > 0) {
             try {
                 port = Integer.parseInt(args[0]);

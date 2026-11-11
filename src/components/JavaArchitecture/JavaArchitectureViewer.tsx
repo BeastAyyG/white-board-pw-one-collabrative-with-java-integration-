@@ -1,3 +1,4 @@
+import { copyText } from '../../clipboard';
 import React, { useState } from 'react';
 import { Copy, Check, FileCode, Cpu, ShieldCheck, Terminal, Zap, BookOpen } from 'lucide-react';
 
@@ -145,7 +146,7 @@ public final class WhiteboardServer {
     }
 
     public static void main(String[] args) throws Exception {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : 8080;
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 8090;
         new WhiteboardServer(port).start();
     }
 }`,
@@ -394,7 +395,7 @@ export const JavaArchitectureViewer: React.FC = () => {
   const activeSnippet = JAVA_FILES.find((s) => s.id === selectedSnippetId) || JAVA_FILES[0];
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(activeSnippet.code);
+    copyText(activeSnippet.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

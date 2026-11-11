@@ -38,8 +38,8 @@ mvn package                 # runs all JUnit tests, builds apex-engine.jar (fat 
 java -jar target/apex-engine.jar
 
 # Collaborative whiteboard WebSocket server (rooms, snapshots, cursor relay)
-java -cp target/apex-engine.jar com.apex.whiteboard.WhiteboardServer 8080
-# -> ws://localhost:8080/ws/whiteboard
+java -cp target/apex-engine.jar com.apex.whiteboard.WhiteboardServer 8090
+# -> ws://localhost:8090/ws/whiteboard
 
 # 10,000 Project Loom virtual-thread order simulation
 java -cp target/apex-engine.jar com.apex.simulator.LoomSimulationMain

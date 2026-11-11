@@ -1,3 +1,4 @@
+import { copyText } from './clipboard';
 import React, { useEffect, useState } from 'react';
 import { Activity, FileCode, HelpCircle, Layers, Trash2 } from 'lucide-react';
 import { Header, ActiveTab } from './components/Header.tsx';
@@ -74,7 +75,7 @@ export default function App() {
       // The quiz decides: start the poll, reveal the answer, or next question.
       window.dispatchEvent(new CustomEvent('apex:mcq-primary'));
     } else if (activeTab === 'java') {
-      navigator.clipboard.writeText(JAVA_QUICKSTART);
+      copyText(JAVA_QUICKSTART);
     }
   };
 
@@ -363,8 +364,8 @@ mvn -q package -DskipTests          # builds apex-engine.jar (fat jar)
 java -jar target/apex-engine.jar    # runs the EngineDemoMain walkthrough
 
 # Whiteboard WebSocket server (rooms, snapshots, cursor relay)
-java -cp target/apex-engine.jar com.apex.whiteboard.WhiteboardServer 8080
-# -> ws://localhost:8080/ws/whiteboard  (protocol documented in README.md)
+java -cp target/apex-engine.jar com.apex.whiteboard.WhiteboardServer 8090
+# -> ws://localhost:8090/ws/whiteboard  (protocol documented in README.md)
 
 # 10,000 virtual-thread order simulation
 java -cp target/apex-engine.jar com.apex.simulator.LoomSimulationMain

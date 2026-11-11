@@ -74,7 +74,7 @@ public final class EngineDemoMain {
         System.out.printf("  Replayed %,d journal records%n", replayed.get());
         System.out.println("======================================================================");
         System.out.println("Demo complete. Next:");
-        System.out.println("  Whiteboard server : java -cp apex-engine.jar com.apex.whiteboard.WhiteboardServer 8080");
+        System.out.println("  Whiteboard server : java -cp apex-engine.jar com.apex.whiteboard.WhiteboardServer 8090");
         System.out.println("  10k-agent sim     : java -cp apex-engine.jar com.apex.simulator.LoomSimulationMain");
         System.out.println("======================================================================");
     }

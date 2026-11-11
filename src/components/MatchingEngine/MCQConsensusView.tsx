@@ -209,7 +209,7 @@ export const MCQConsensusView: React.FC = () => {
   useEffect(() => {
     let ws: WebSocket | null = null;
     try {
-      const host = window.location.hostname;
+      const host = window.location.hostname || 'localhost';
       ws = new WebSocket(`ws://${host}:8090/ws/whiteboard`);
       wsRef.current = ws;
       ws.onopen = () => {

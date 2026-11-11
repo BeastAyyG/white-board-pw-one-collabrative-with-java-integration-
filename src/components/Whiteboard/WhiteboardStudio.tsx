@@ -234,7 +234,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     const ws = new WebSocket(`ws://${host}:8090/ws/whiteboard`);
     wsRef.current = ws;
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'join', room: liveRoomRef.current, name: displayNameRef.current }));
+      ws.send(JSON.stringify({ type: 'join', room: liveRoomRef.current, user: displayNameRef.current, color: myColorRef.current }));
     };
     ws.onmessage = (ev) => {
       let msg: any;
@@ -285,13 +285,28 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             }];
           });
         }
+      } else if (msg.type === 'clear') {
+        setElements([]);
+        setSelectedElementId(null);
+      } else if (msg.type === 'delete' && msg.id) {
+        setElements((prev) => prev.filter((e) => e.id !== msg.id));
       } else if (msg.type === 'cursor') {
         const name = String(msg.user || '');
         if (!name || name === displayNameRef.current) return;
         const pt = { x: Number(msg.x) || 0, y: Number(msg.y) || 0 };
-        setPeers((prev) => prev.map((p) =>
-          p.name === name ? { ...p, cursor: pt, lastActive: Date.now() } : p
-        ));
+        setPeers((prev) => {
+          if (!prev.some((p) => p.name === name)) {
+            // Someone who joined before us: add them on their first cursor move.
+            return [...prev, {
+              id: `peer-${name}`, name, color: peerColorFor(name),
+              cursor: pt, activeTool: 'select' as ToolType,
+              isBot: false, avatarSeed: name, lastAction: 'drawing', lastActive: Date.now(),
+            }];
+          }
+          return prev.map((p) =>
+            p.name === name ? { ...p, cursor: pt, lastActive: Date.now() } : p
+          );
+        });
       }
     };
     ws.onerror = () => setLiveStatus('error');
@@ -873,11 +888,22 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   };
 
   // Undo / Redo
+  // In a live room, push the difference between two canvas states to the server
+  // so undo/redo show up on every connected screen, not just this one.
+  const syncDiffLive = (from: CanvasElement[], to: CanvasElement[]) => {
+    if (!wsRef.current) return;
+    const toIds = new Set(to.map((e) => e.id));
+    from.forEach((e) => { if (!toIds.has(e.id)) deleteLive(e.id); });
+    const fromMap = new Map(from.map((e) => [e.id, e]));
+    to.forEach((e) => { if (fromMap.get(e.id) !== e) upsertLive(e); });
+  };
+
   const handleUndo = () => {
     if (undoStack.length === 0) return;
     const prev = undoStack[undoStack.length - 1];
     setRedoStack((r) => [...r, elements]);
     setUndoStack((u) => u.slice(0, u.length - 1));
+    syncDiffLive(elements, prev);
     setElements(prev);
   };
 
@@ -886,6 +912,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     const next = redoStack[redoStack.length - 1];
     setUndoStack((u) => [...u, elements]);
     setRedoStack((r) => r.slice(0, r.length - 1));
+    syncDiffLive(elements, next);
     setElements(next);
   };
 
@@ -1072,7 +1099,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       </div>
 
       {/* Top Right: Live Collaborator Presence Strip */}
-      <div className="absolute top-16 left-2 md:top-4 md:left-auto md:right-6 z-20 flex items-center gap-2.5 md:gap-3 bg-[#C0C0C0] border-2 border-black rounded-none px-3 py-1.5 md:px-4 md:py-2 shadow-[4px_4px_0_rgba(0,0,0,0.45)] max-w-[calc(100vw-16px)] overflow-x-auto">
+      <div className="absolute top-16 left-2 md:top-[76px] md:left-auto md:right-6 z-20 flex items-center gap-2.5 md:gap-3 bg-[#C0C0C0] border-2 border-black rounded-none px-3 py-1.5 md:px-4 md:py-2 shadow-[4px_4px_0_rgba(0,0,0,0.45)] max-w-[calc(100vw-16px)] overflow-x-auto">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4 text-[#0000CD]" />
           <span className="text-xs font-semibold text-black">
