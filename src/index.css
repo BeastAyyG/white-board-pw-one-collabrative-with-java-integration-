@@ -1,1 +1,201 @@
 @import "tailwindcss";
+
+/* Retro Windows-95 / pixel theme: the "the null pointers" deck theme.
+   Teal desktop, royal-blue title bars, silver panels, pixel headings. */
+@theme {
+  --color-win-teal: #008080;
+  --color-win-blue: #0000cd;
+  --color-win-silver: #c0c0c0;
+  --color-win-yellow: #ffff99;
+  --color-win-ink: #000000;
+  --font-pixel: "VT323", "Courier New", monospace;
+  --font-win: Tahoma, Verdana, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: Tahoma, Verdana, sans-serif;
+  background: #008080;
+  color: #000000;
+}
+
+/* Pixel display type, with a monospace fallback when VT323 cannot load. */
+.font-pixel {
+  font-family: "VT323", "Courier New", monospace;
+}
+
+/* Retro window: white body, hard black border, offset hard shadow. */
+.win-window {
+  background: #ffffff;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Silver panel: the classic dialog / toolbar surface. */
+.win-panel {
+  background: #c0c0c0;
+  border: 2px solid #000000;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* Sunken panel (inputs, status wells). */
+.win-sunken {
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+}
+
+/* Teal window title bar, white pixel text. */
+.win-titlebar {
+  background: #008080;
+  color: #ffffff;
+  font-family: "VT323", "Courier New", monospace;
+  letter-spacing: 0.04em;
+}
+
+/* Blue window title bar, used for the active / primary window. */
+.win-titlebar-blue {
+  background: #0000cd;
+  color: #ffffff;
+  font-family: "VT323", "Courier New", monospace;
+  letter-spacing: 0.04em;
+}
+
+/* Classic raised button. */
+.win-btn {
+  background: #c0c0c0;
+  color: #000000;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #0a0a0a;
+  cursor: pointer;
+  user-select: none;
+}
+.win-btn:hover {
+  background: #d4d4d4;
+}
+.win-btn:active,
+.win-btn-pressed {
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+}
+
+/* Pressed + selected: blue, white text. */
+.win-btn-selected {
+  background: #0000cd;
+  color: #ffffff;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Pressed + selected, danger red (eraser). */
+.win-btn-danger {
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Pressed + selected, sticky-note yellow. */
+.win-btn-sticky {
+  background: #ffd700;
+  color: #000000;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Teal desktop and its light checkerboard, like the deck's canvas slide. */
+.win-desktop {
+  background: #008080;
+}
+.win-checker {
+  background-color: #e8e8e8;
+  background-image: repeating-conic-gradient(#ffffff 0% 25%, #e8e8e8 0% 50%);
+  background-size: 32px 32px;
+}
+
+/* Silver taskbar along the bottom of the screen. */
+.win-taskbar {
+  background: #c0c0c0;
+  border-top: 2px solid #ffffff;
+  box-shadow: 0 -1px 0 #808080;
+}
+
+/* Blue gradient title bar, like a real Win95 active window. */
+.win-titlebar-gradient {
+  background: linear-gradient(90deg, #000080 0%, #0000cd 60%, #1084d0 100%);
+  color: #ffffff;
+}
+
+/* Small square buttons on a title bar (_ □ X ?). */
+.win-title-btn {
+  width: 22px;
+  height: 20px;
+  background: #c0c0c0;
+  color: #000000;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset 1px 1px 0 #dfdfdf, inset -1px -1px 0 #0a0a0a;
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+.win-title-btn:active {
+  border-color: #808080 #ffffff #ffffff #808080;
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf;
+}
+
+/* Marquee strip, like the deck's repeating "Agenda •" band. */
+@keyframes win-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.win-marquee-track {
+  animation: win-marquee 28s linear infinite;
+}
+
+/* Retro scrollbars: silver track, raised thumb. */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #dfdfdf;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d4d4d4;
+}
+::-webkit-scrollbar-corner {
+  background: #dfdfdf;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c0c0c0 #dfdfdf;
+}

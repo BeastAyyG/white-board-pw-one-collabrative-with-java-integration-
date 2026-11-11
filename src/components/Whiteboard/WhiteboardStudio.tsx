@@ -464,8 +464,10 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
 
-    // Draw subtle dot grid
-    ctx.fillStyle = '#1E293B';
+    // White board + subtle dot grid
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width / zoom, canvas.height / zoom);
+    ctx.fillStyle = '#C9C9C9';
     const gridSize = 24;
     for (let x = 0; x < canvas.width / zoom; x += gridSize) {
       for (let y = 0; y < canvas.height / zoom; y += gridSize) {
@@ -919,15 +921,15 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-61px)] bg-[#0B0F19] overflow-hidden flex flex-col select-none">
+    <div className="relative w-full h-full bg-[#008080] overflow-hidden flex flex-col select-none">
       {/* Top Floating Control Bar */}
-      <div className="absolute top-3 left-2 right-2 md:right-auto md:left-6 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-2.5 py-1.5 md:px-3 md:py-2 shadow-xl overflow-x-auto max-w-[calc(100vw-16px)]">
+      <div className="absolute top-3 left-2 right-2 md:right-auto md:left-6 z-20 flex items-center gap-2 bg-[#C0C0C0] border-2 border-black rounded-none px-2.5 py-1.5 md:px-3 md:py-2 shadow-[4px_4px_0_rgba(0,0,0,0.45)] overflow-x-auto max-w-[calc(100vw-16px)]">
         {/* Tool Selector Buttons */}
-        <div className="flex items-center gap-1 border-r border-slate-800 pr-2">
+        <div className="flex items-center gap-1 border-r border-black pr-2">
           <button
             onClick={() => setActiveTool('select')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'select' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'select' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="Select & Move"
           >
@@ -935,8 +937,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('pen')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'pen' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'pen' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="Freehand Vector Pen"
           >
@@ -944,8 +946,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('rectangle')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'rectangle' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'rectangle' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="Architecture Box"
           >
@@ -953,8 +955,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('ellipse')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'ellipse' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'ellipse' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="RingBuffer Ellipse"
           >
@@ -962,8 +964,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('arrow')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'arrow' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'arrow' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="Connector Arrow"
           >
@@ -971,8 +973,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('sticky')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'sticky' ? 'bg-amber-500 text-slate-900 font-bold' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'sticky' ? 'win-btn-sticky' : 'win-btn'
             }`}
             title="Architecture Sticky Note"
           >
@@ -980,8 +982,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('text')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'text' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'text' ? 'win-btn-selected' : 'win-btn'
             }`}
             title="Text Component"
           >
@@ -989,8 +991,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           </button>
           <button
             onClick={() => setActiveTool('eraser')}
-            className={`p-2 rounded-lg transition-colors ${
-              activeTool === 'eraser' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            className={`p-2 ${
+              activeTool === 'eraser' ? 'win-btn-danger' : 'win-btn'
             }`}
             title="Eraser"
           >
@@ -1000,7 +1002,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
         {/* Color Palette */}
         {activeTool !== 'sticky' ? (
-          <div className="flex items-center gap-1.5 border-r border-slate-800 pr-2">
+          <div className="flex items-center gap-1.5 border-r border-black pr-2">
             {COLOR_PALETTE.map((c) => (
               <button
                 key={c}
@@ -1013,7 +1015,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             ))}
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 border-r border-slate-800 pr-2">
+          <div className="flex items-center gap-1.5 border-r border-black pr-2">
             {STICKY_COLORS.map((c) => (
               <button
                 key={c}
@@ -1032,7 +1034,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           <button
             onClick={handleUndo}
             disabled={undoStack.length === 0}
-            className="p-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 win-btn disabled:opacity-30 disabled:cursor-not-allowed"
             title="Undo"
           >
             <RotateCcw className="w-4 h-4" />
@@ -1040,28 +1042,28 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           <button
             onClick={handleRedo}
             disabled={redoStack.length === 0}
-            className="p-2 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 win-btn disabled:opacity-30 disabled:cursor-not-allowed"
             title="Redo"
           >
             <RotateCw className="w-4 h-4" />
           </button>
           <button
             onClick={handleClear}
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 win-btn"
             title="Clear Canvas"
           >
             <Trash2 className="w-4 h-4" />
           </button>
           <button
             onClick={handleExportPng}
-            className="p-2 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 win-btn"
             title="Export PNG Diagram"
           >
             <Download className="w-4 h-4" />
           </button>
           <button
             onClick={handleExportJson}
-            className="p-2 text-slate-400 hover:text-sky-400 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 win-btn"
             title="Export Elements JSON"
           >
             <FileJson className="w-4 h-4" />
@@ -1070,10 +1072,10 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       </div>
 
       {/* Top Right: Live Collaborator Presence Strip */}
-      <div className="absolute top-16 left-2 md:top-4 md:left-auto md:right-6 z-20 flex items-center gap-2.5 md:gap-3 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-3 py-1.5 md:px-4 md:py-2 shadow-xl max-w-[calc(100vw-16px)] overflow-x-auto">
+      <div className="absolute top-16 left-2 md:top-4 md:left-auto md:right-6 z-20 flex items-center gap-2.5 md:gap-3 bg-[#C0C0C0] border-2 border-black rounded-none px-3 py-1.5 md:px-4 md:py-2 shadow-[4px_4px_0_rgba(0,0,0,0.45)] max-w-[calc(100vw-16px)] overflow-x-auto">
         <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-indigo-400" />
-          <span className="text-xs font-semibold text-slate-200">
+          <Users className="w-4 h-4 text-[#0000CD]" />
+          <span className="text-xs font-semibold text-black">
             {1 + bots.length + peers.length} Collaborators
           </span>
         </div>
@@ -1082,7 +1084,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
         <div className="flex items-center -space-x-1.5 overflow-hidden">
           {/* Host User */}
           <div
-            className="w-7 h-7 rounded-full bg-indigo-500 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow"
+            className="w-7 h-7 rounded-full bg-[#0000CD] border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white shadow"
             title="You (Session Host)"
           >
             You
@@ -1102,16 +1104,16 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             </button>
           ))}
           {bots.length > 5 && (
-            <div className="w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-slate-300">
+            <div className="w-7 h-7 rounded-full bg-[#C0C0C0] border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-[#1F1F1F]">
               +{bots.length - 5}
             </div>
           )}
         </div>
 
         {/* Bot Controls */}
-        <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+        <div className="flex items-center gap-1.5 pl-2 border-l border-black">
           {/* Behavior mode selector */}
-          <div className="flex items-center gap-0.5 bg-slate-950/60 rounded-lg p-0.5" title="Bot swarm behavior">
+          <div className="flex items-center gap-0.5 bg-white rounded-none p-0.5" title="Bot swarm behavior">
             {(
               [
                 { id: 'architect', icon: DraftingCompass, label: 'Architects draw nodes' },
@@ -1123,7 +1125,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
                 key={id}
                 onClick={() => setBotBehavior(id)}
                 className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                  botBehavior === id ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-white'
+                  botBehavior === id ? 'bg-[#0000CD] text-white' : 'text-[#404040] hover:text-black'
                 }`}
                 title={label}
               >
@@ -1134,10 +1136,10 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
           <button
             onClick={() => setIsBotsActive(!isBotsActive)}
-            className={`p-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors ${
+            className={`p-1.5 rounded-none text-xs font-medium flex items-center gap-1 transition-colors ${
               isBotsActive
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
-                : 'bg-slate-800 text-slate-400'
+                ? 'bg-emerald-950/60 text-[#047857] border border-emerald-800/60'
+                : 'bg-[#C0C0C0] text-[#404040]'
             }`}
             title={isBotsActive ? 'Pause Bot Swarm' : 'Resume Bot Swarm'}
           >
@@ -1147,31 +1149,31 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
           <button
             onClick={() => handleAddBots(5)}
-            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg flex items-center gap-1 font-medium transition-colors"
+            className="px-2 py-1 bg-[#C0C0C0] hover:bg-slate-700 text-black text-xs rounded-none flex items-center gap-1 font-medium transition-colors"
             title="Spawn +5 Collaborator Bots"
           >
-            <Plus className="w-3 h-3 text-indigo-400" />
+            <Plus className="w-3 h-3 text-[#0000CD]" />
             +5 Bots
           </button>
         </div>
 
         {/* Live multi-computer collaboration */}
-        <div className="flex items-center gap-1.5 pl-2 border-l border-slate-800" title="Join a live room hosted by the Java server">
-          <RadioTower className={`w-4 h-4 ${liveOn ? 'text-emerald-400' : 'text-slate-500'}`} />
+        <div className="flex items-center gap-1.5 pl-2 border-l border-black" title="Join a live room hosted by the Java server">
+          <RadioTower className={`w-4 h-4 ${liveOn ? 'text-[#047857]' : 'text-[#404040]'}`} />
           {!liveOn && (
             <>
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value.slice(0, 16))}
                 placeholder="Name"
-                className="bg-slate-950/60 text-xs text-slate-100 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500 w-20"
+                className="bg-white text-xs text-black px-2 py-1 rounded-none border border-black focus:outline-none focus:border-[#0000CD] w-20"
                 title="Your display name"
               />
               <input
                 value={liveRoom}
                 onChange={(e) => setLiveRoom(e.target.value.slice(0, 24) || 'main')}
                 placeholder="Room"
-                className="bg-slate-950/60 text-xs text-slate-100 px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-emerald-500 w-20"
+                className="bg-white text-xs text-black px-2 py-1 rounded-none border border-black focus:outline-none focus:border-[#0000CD] w-20"
                 title="Room name — everyone with the same room draws together"
               />
             </>
@@ -1179,7 +1181,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
           <button
             onClick={() => (liveOn ? disconnectLive() : connectLive())}
             disabled={liveStatus === 'connecting'}
-            className={`px-2.5 py-1 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50 ${
+            className={`px-2.5 py-1 text-xs font-semibold rounded-none flex items-center gap-1.5 transition-colors disabled:opacity-50 ${
               liveOn
                 ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60 hover:bg-rose-900/60'
                 : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900/60'
@@ -1190,13 +1192,13 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             {liveStatus === 'connecting' ? 'Connecting…' : liveOn ? `Live: ${liveRoom}` : 'Go Live'}
           </button>
           {liveStatus === 'error' && (
-            <span className="text-[10px] text-rose-400">server unreachable</span>
+            <span className="text-[10px] text-[#DC2626]">server unreachable</span>
           )}
           {/* Live peer avatars */}
           {peers.slice(0, 4).map((p) => (
             <div
               key={p.id}
-              className="w-7 h-7 rounded-full border-2 border-emerald-400/70 flex items-center justify-center text-[10px] font-bold text-white shadow"
+              className="w-7 h-7 rounded-full border-2 border-[#047857] flex items-center justify-center text-[10px] font-bold text-white shadow"
               style={{ backgroundColor: p.color }}
               title={`${p.name} (live)`}
             >
@@ -1204,7 +1206,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             </div>
           ))}
           {peers.length > 4 && (
-            <div className="w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-slate-300">
+            <div className="w-7 h-7 rounded-full bg-[#C0C0C0] border-2 border-slate-900 flex items-center justify-center text-[10px] font-medium text-[#1F1F1F]">
               +{peers.length - 4}
             </div>
           )}
@@ -1223,10 +1225,10 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
       </div>
 
       {/* Bottom Zoom & View Controls */}
-      <div className="absolute bottom-4 left-6 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 shadow-xl">
+      <div className="absolute bottom-4 left-6 z-20 flex items-center gap-2 bg-[#C0C0C0] border-2 border-black rounded-none px-3 py-1.5 text-xs text-[#1F1F1F] shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
         <button
           onClick={() => setZoom((z) => Math.max(0.4, Number((z - 0.1).toFixed(1))))}
-          className="p-1 hover:text-white"
+          className="p-1 hover:text-black"
           title="Zoom Out"
         >
           <ZoomOut className="w-3.5 h-3.5" />
@@ -1234,7 +1236,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
         <span className="font-mono tabular-nums px-1">{Math.round(zoom * 100)}%</span>
         <button
           onClick={() => setZoom((z) => Math.min(2.5, Number((z + 0.1).toFixed(1))))}
-          className="p-1 hover:text-white"
+          className="p-1 hover:text-black"
           title="Zoom In"
         >
           <ZoomIn className="w-3.5 h-3.5" />
@@ -1244,7 +1246,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
             setZoom(1);
             setPan({ x: 0, y: 0 });
           }}
-          className="ml-1 p-1 hover:text-white text-slate-400"
+          className="ml-1 p-1 hover:text-black text-[#404040]"
           title="Reset View"
         >
           <Maximize2 className="w-3.5 h-3.5" />
@@ -1253,8 +1255,8 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
 
       {/* Selected Element Quick Editor (if selected) */}
       {selectedElementId && (
-        <div className="absolute bottom-4 right-6 z-20 bg-slate-900/95 backdrop-blur-md border border-indigo-500/50 rounded-xl p-3 shadow-2xl flex items-center gap-3">
-          <span className="text-xs font-medium text-indigo-400">Selected Node</span>
+        <div className="absolute bottom-4 right-6 z-20 bg-white  border border-[#0000CD] rounded-none p-3 shadow-[4px_4px_0_rgba(0,0,0,0.45)] flex items-center gap-3">
+          <span className="text-xs font-medium text-[#0000CD]">Selected Node</span>
           <input
             type="text"
             placeholder="Edit text..."
@@ -1269,7 +1271,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
               const el = elements.find((el) => el.id === selectedElementId);
               if (el) upsertLive(el);
             }}
-            className="bg-slate-800 text-xs text-slate-100 px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-indigo-500 w-48"
+            className="bg-[#C0C0C0] text-xs text-black px-3 py-1.5 rounded-none border border-black focus:outline-none focus:border-[#0000CD] w-48"
           />
           <button
             onClick={() => {
@@ -1277,7 +1279,7 @@ export const WhiteboardStudio: React.FC<WhiteboardStudioProps> = () => {
               if (selectedElementId) deleteLive(selectedElementId);
               setSelectedElementId(null);
             }}
-            className="px-2.5 py-1.5 text-xs text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
+            className="px-2.5 py-1.5 text-xs text-[#DC2626] hover:bg-rose-950/40 rounded-none transition-colors"
           >
             Delete
           </button>

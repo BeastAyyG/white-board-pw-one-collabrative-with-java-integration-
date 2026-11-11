@@ -400,18 +400,18 @@ export const JavaArchitectureViewer: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-[calc(100vh-61px)] bg-[#0B0F19] text-slate-100 p-6 flex flex-col gap-5 select-none overflow-y-auto">
+    <div className="w-full h-full bg-[#008080] text-black p-6 flex flex-col gap-5 select-none overflow-y-auto">
       {/* Top Architecture Overview Banner */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+      <div className="bg-white border border-black rounded-none p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+          <div className="w-10 h-10 rounded-none bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-[#0369A1]">
             <Cpu className="w-5 h-5" />
           </div>
           <div>
             <h1 className="text-base font-bold text-white tracking-tight">
               Production Java 21+ Architecture & Engineering Blueprint
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#404040]">
               Mechanical Sympathy · LMAX Disruptor 4.0 · Project Loom Virtual Threads · Zero-GC Memory
             </p>
           </div>
@@ -420,7 +420,7 @@ export const JavaArchitectureViewer: React.FC = () => {
         {/* Copy Active Code */}
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer self-start md:self-auto"
+          className="flex items-center gap-2 px-4 py-2 bg-[#0000CD] hover:bg-[#0000CD] text-white rounded-none text-xs font-semibold shadow-sm transition-colors cursor-pointer self-start md:self-auto"
         >
           {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
           <span>{copied ? 'Copied to Clipboard' : `Copy ${activeSnippet.filename}`}</span>
@@ -429,15 +429,15 @@ export const JavaArchitectureViewer: React.FC = () => {
 
       {/* Latency & Throughput Benchmark Comparison Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold text-slate-300">LMAX Disruptor (Lock-Free)</span>
-            <span className="text-emerald-400 font-mono">Winner</span>
+        <div className="bg-white border border-black rounded-none p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs text-[#404040]">
+            <span className="font-semibold text-[#1F1F1F]">LMAX Disruptor (Lock-Free)</span>
+            <span className="text-[#047857] font-mono">Winner</span>
           </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400 tabular-nums">
-            26.4M <span className="text-xs font-normal text-slate-400">ops/sec</span>
+          <div className="text-2xl font-bold font-mono text-[#047857] tabular-nums">
+            26.4M <span className="text-xs font-normal text-[#404040]">ops/sec</span>
           </div>
-          <div className="text-xs text-slate-400 flex justify-between font-mono">
+          <div className="text-xs text-[#404040] flex justify-between font-mono">
             <span>p99: 0.82 μs</span>
             <span>p99.9: 1.45 μs</span>
           </div>
@@ -446,15 +446,15 @@ export const JavaArchitectureViewer: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold text-slate-300">ArrayBlockingQueue</span>
-            <span className="text-slate-500 font-mono">ReentrantLock</span>
+        <div className="bg-white border border-black rounded-none p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs text-[#404040]">
+            <span className="font-semibold text-[#1F1F1F]">ArrayBlockingQueue</span>
+            <span className="text-[#404040] font-mono">ReentrantLock</span>
           </div>
-          <div className="text-2xl font-bold font-mono text-amber-400 tabular-nums">
-            3.2M <span className="text-xs font-normal text-slate-400">ops/sec</span>
+          <div className="text-2xl font-bold font-mono text-[#92400E] tabular-nums">
+            3.2M <span className="text-xs font-normal text-[#404040]">ops/sec</span>
           </div>
-          <div className="text-xs text-slate-400 flex justify-between font-mono">
+          <div className="text-xs text-[#404040] flex justify-between font-mono">
             <span>p99: 18.4 μs</span>
             <span>p99.9: 46.2 μs</span>
           </div>
@@ -463,15 +463,15 @@ export const JavaArchitectureViewer: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold text-slate-300">LinkedBlockingQueue</span>
-            <span className="text-rose-400 font-mono">GC Pressure</span>
+        <div className="bg-white border border-black rounded-none p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between text-xs text-[#404040]">
+            <span className="font-semibold text-[#1F1F1F]">LinkedBlockingQueue</span>
+            <span className="text-[#DC2626] font-mono">GC Pressure</span>
           </div>
-          <div className="text-2xl font-bold font-mono text-rose-400 tabular-nums">
-            1.8M <span className="text-xs font-normal text-slate-400">ops/sec</span>
+          <div className="text-2xl font-bold font-mono text-[#DC2626] tabular-nums">
+            1.8M <span className="text-xs font-normal text-[#404040]">ops/sec</span>
           </div>
-          <div className="text-xs text-slate-400 flex justify-between font-mono">
+          <div className="text-xs text-[#404040] flex justify-between font-mono">
             <span>p99: 38.0 μs</span>
             <span>p99.9: 124.0 μs</span>
           </div>
@@ -485,24 +485,24 @@ export const JavaArchitectureViewer: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: Java File Selector (4 Cols) */}
         <div className="lg:col-span-4 flex flex-col gap-2">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-1">
+          <span className="font-pixel text-2xl text-white uppercase tracking-wider px-1">
             Java 21 Source Blueprint
           </span>
           {JAVA_FILES.map((snippet) => (
             <button
               key={snippet.id}
               onClick={() => setSelectedSnippetId(snippet.id)}
-              className={`text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
+              className={`text-left p-3.5 rounded-none border transition-all cursor-pointer flex flex-col gap-1 ${
                 selectedSnippetId === snippet.id
-                  ? 'bg-slate-800/90 border-indigo-500/60 shadow-lg'
-                  : 'bg-slate-900/50 border-slate-800 hover:bg-slate-800/40'
+                  ? 'bg-[#C0C0C0]/90 border-[#0000CD]/60 shadow-lg'
+                  : 'bg-white border-black hover:bg-[#D4D4D4]/40'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white font-mono">{snippet.filename}</span>
-                <span className="text-[10px] text-indigo-400 font-semibold">{snippet.title}</span>
+                <span className="text-[10px] text-[#0000CD] font-semibold">{snippet.title}</span>
               </div>
-              <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="text-[11px] text-[#404040] line-clamp-2 leading-relaxed">
                 {snippet.description}
               </p>
             </button>
@@ -510,23 +510,23 @@ export const JavaArchitectureViewer: React.FC = () => {
         </div>
 
         {/* Right: Code Display Viewer (8 Cols) */}
-        <div className="lg:col-span-8 bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden flex flex-col shadow-2xl">
+        <div className="lg:col-span-8 bg-slate-950 border border-black rounded-none overflow-hidden flex flex-col shadow-[4px_4px_0_rgba(0,0,0,0.45)]">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
-            <div className="flex items-center gap-2 font-mono text-xs text-slate-300">
-              <FileCode className="w-4 h-4 text-sky-400" />
+          <div className="flex items-center justify-between px-4 py-3 bg-[#C0C0C0] border-b border-black">
+            <div className="flex items-center gap-2 font-mono text-xs text-[#1F1F1F]">
+              <FileCode className="w-4 h-4 text-[#0369A1]" />
               <span>{activeSnippet.filename}</span>
             </div>
-            <span className="text-xs text-slate-400 font-mono">Java 21 LTS</span>
+            <span className="text-xs text-[#404040] font-mono">Java 21 LTS</span>
           </div>
 
           {/* Description banner */}
-          <div className="px-4 py-2.5 bg-indigo-950/20 border-b border-slate-800/80 text-xs text-indigo-200">
+          <div className="px-4 py-2.5 bg-indigo-950/20 border-b border-black/80 text-xs text-indigo-200">
             {activeSnippet.description}
           </div>
 
           {/* Code Body */}
-          <div className="p-4 overflow-x-auto font-mono text-xs text-slate-200 leading-relaxed max-h-[540px]">
+          <div className="p-4 overflow-x-auto font-mono text-xs text-[#E5E5E5] leading-relaxed max-h-[540px]">
             <pre>
               <code>{activeSnippet.code}</code>
             </pre>
