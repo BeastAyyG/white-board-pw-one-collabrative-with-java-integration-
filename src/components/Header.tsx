@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Activity, HelpCircle, FileCode, Sparkles } from 'lucide-react';
+import { Layers, HelpCircle, FileCode, Sparkles } from 'lucide-react';
 
 export type ActiveTab = 'whiteboard' | 'engine' | 'mcq' | 'java';
 
@@ -14,7 +14,6 @@ interface HeaderProps {
 
 const TABS: { id: ActiveTab; label: string; short: string; icon: React.ReactNode }[] = [
   { id: 'whiteboard', label: 'Whiteboard Studio', short: 'Whiteboard', icon: <Layers className="w-4 h-4" /> },
-  { id: 'engine', label: 'LMAX Disruptor Engine', short: 'Disruptor', icon: <Activity className="w-4 h-4" /> },
   { id: 'mcq', label: 'Virtual MCQ Consensus', short: 'MCQ Pool', icon: <HelpCircle className="w-4 h-4" /> },
   { id: 'java', label: 'Java 21 Architecture', short: 'Java 21', icon: <FileCode className="w-4 h-4" /> },
 ];
